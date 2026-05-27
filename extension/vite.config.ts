@@ -12,6 +12,7 @@ function copyStaticExtensionFiles(): Plugin {
       const distDir = resolve(rootDir, "dist");
       mkdirSync(distDir, { recursive: true });
       copyFileSync(resolve(rootDir, "manifest.json"), resolve(distDir, "manifest.json"));
+      copyFileSync(resolve(rootDir, "panel.html"), resolve(distDir, "panel.html"));
       copyFileSync(
         resolve(rootDir, "src", "overlay.css"),
         resolve(distDir, "overlay.css"),
@@ -28,6 +29,7 @@ export default defineConfig({
       input: {
         contentScript: resolve(rootDir, "src/contentScript.ts"),
         background: resolve(rootDir, "src/background.ts"),
+        panel: resolve(rootDir, "src/panel.ts"),
       },
       output: {
         entryFileNames: "[name].js",

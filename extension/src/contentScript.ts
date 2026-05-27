@@ -6,6 +6,8 @@ import type {
   BackgroundMessage,
   CopilotSettings,
   ChatMessage,
+  ContentScriptMessage,
+  LatestTranscriptReply,
 } from "./types";
 
 const MAX_QUESTION_LENGTH = 700;
@@ -17,6 +19,7 @@ const DEFAULT_SETTINGS: CopilotSettings = {
   autoDetect: true,
   ignoredSpeakerName: "",
   overlayPosition: undefined,
+  overlaySize: undefined,
 };
 
 const transcriptSelectors = [
@@ -66,6 +69,9 @@ const overlay = new CopilotOverlay({
     overlay.setError(""); // Clear any errors
     overlay.setDraft("", "Conversation history cleared.");
   },
+  onDetachPanel: () => {
+    openDetachedPanel();
+  },
 });
 
 void initialize();
@@ -75,7 +81,56 @@ async function initialize(): Promise<void> {
   overlay.setSettings(settings);
   autoDetectOwnName();
   installHotkeys();
+  installSettingsListener();
   startTranscriptObserver();
+  installRuntimeMessageHandlers();
+}
+
+function installSettingsListener(): void {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "sync") {
+      return;
+    }
+
+    const nextSettings: Partial<CopilotSettings> = {};
+    if (changes.backendUrl?.newValue !== undefined) {
+      nextSettings.backendUrl = String(changes.backendUrl.newValue);
+    }
+    if (changes.autoDetect?.newValue !== undefined) {
+      nextSettings.autoDetect = Boolean(changes.autoDetect.newValue);
+    }
+    if (changes.ignoredSpeakerName?.newValue !== undefined) {
+      nextSettings.ignoredSpeakerName = String(changes.ignoredSpeakerName.newValue);
+    }
+
+    if (Object.keys(nextSettings).length > 0) {
+      settings = { ...settings, ...nextSettings };
+      overlay.setSettings(settings);
+    }
+  });
+}
+
+function installRuntimeMessageHandlers(): void {
+  chrome.runtime.onMessage.addListener(
+    (
+      message: ContentScriptMessage,
+      _sender,
+      sendResponse: (response: LatestTranscriptReply | { ok: true }) => void,
+    ) => {
+      if (message.type === "READ_LATEST_TRANSCRIPT") {
+        sendResponse(readLatestTranscriptForPanel());
+        return false;
+      }
+
+      if (message.type === "SET_IN_PAGE_OVERLAY_VISIBLE") {
+        overlay.setDetached(!message.visible);
+        sendResponse({ ok: true });
+        return false;
+      }
+
+      return false;
+    },
+  );
 }
 
 function autoDetectOwnName(): void {
@@ -718,6 +773,45 @@ async function analyzeTranscriptOrQuestion(
   }
 
   analyzeQuestion(question, source);
+}
+
+function readLatestTranscriptForPanel(): LatestTranscriptReply {
+  const selected = window.getSelection()?.toString().trim() ?? "";
+  const candidate =
+    selected ||
+    getLatestOpposingTranscriptQuestion()?.text ||
+    getLatestVisibleTranscriptText() ||
+    "";
+  const question = extractCurrentInterviewTurn(candidate);
+
+  if (!question?.trim()) {
+    return {
+      ok: false,
+      error:
+        "No visible interviewer question found in the Teams tab. Select transcript text or wait for a question.",
+    };
+  }
+
+  return { ok: true, question };
+}
+
+function openDetachedPanel(): void {
+  sendMessage<{ ok: true } | { ok: false; error: string }>({
+    type: "OPEN_DETACHED_PANEL",
+  })
+    .then((reply) => {
+      if (reply.ok) {
+        overlay.setDetached(true);
+        return;
+      }
+
+      overlay.setError(reply.error);
+    })
+    .catch((error: unknown) => {
+      overlay.setError(
+        error instanceof Error ? error.message : "Could not open separate window.",
+      );
+    });
 }
 
 function extractCurrentInterviewTurn(input: string): string | undefined {

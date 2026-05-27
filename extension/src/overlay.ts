@@ -5,9 +5,18 @@ export interface OverlayHandlers {
   onPickTranscript(): void;
   onSettingsChange(settings: Partial<CopilotSettings>): void;
   onClearHistory?(): void;
+  onDetachPanel?(): void;
+}
+
+export interface OverlayOptions {
+  detachedPanel?: boolean;
 }
 
 export class CopilotOverlay {
+  private static readonly MIN_WIDTH = 360;
+  private static readonly MIN_HEIGHT = 260;
+  private static readonly VIEWPORT_MARGIN = 8;
+
   private readonly root: HTMLDivElement;
   private readonly manualInput: HTMLTextAreaElement;
   private readonly backendInput: HTMLInputElement;
@@ -20,6 +29,7 @@ export class CopilotOverlay {
   private readonly errorBox: HTMLDivElement;
   private readonly analyzeButton: HTMLButtonElement;
   private readonly header: HTMLDivElement;
+  private readonly resizeHandle: HTMLDivElement;
   private minimized = false;
   private dragState:
     | {
@@ -28,8 +38,20 @@ export class CopilotOverlay {
         offsetY: number;
       }
     | undefined;
+  private resizeState:
+    | {
+        pointerId: number;
+        startX: number;
+        startY: number;
+        startWidth: number;
+        startHeight: number;
+      }
+    | undefined;
 
-  constructor(private readonly handlers: OverlayHandlers) {
+  constructor(
+    private readonly handlers: OverlayHandlers,
+    private readonly options: OverlayOptions = {},
+  ) {
     this.root = document.createElement("div");
     this.root.className = "tic-overlay";
     this.root.setAttribute("role", "complementary");
@@ -43,6 +65,7 @@ export class CopilotOverlay {
         </div>
         <div class="tic-header-actions">
           <button class="tic-icon-button" data-action="selection" title="Load selected transcript" aria-label="Load selected transcript">S</button>
+          <button class="tic-icon-button" data-action="detach" title="${this.options.detachedPanel ? "Show in-page overlay" : "Open separate window"}" aria-label="${this.options.detachedPanel ? "Show in-page overlay" : "Open separate window"}">${this.options.detachedPanel ? "P" : "W"}</button>
           <button class="tic-icon-button" data-action="minimize" title="Minimize" aria-label="Minimize">_</button>
         </div>
       </div>
@@ -78,6 +101,7 @@ export class CopilotOverlay {
           Mac: <span class="tic-kbd">⌘</span> + <span class="tic-kbd">Shift</span> + <span class="tic-kbd">K</span> loads selected/latest transcript. <span class="tic-kbd">⌘</span> + <span class="tic-kbd">Shift</span> + <span class="tic-kbd">L</span> focuses input.
         </div>
       </div>
+      <div class="tic-resize-handle" title="Resize" aria-hidden="true"></div>
     `;
 
     this.manualInput = this.root.querySelector(".tic-input") as HTMLTextAreaElement;
@@ -94,18 +118,27 @@ export class CopilotOverlay {
     this.answerBox = this.root.querySelector(".tic-answer") as HTMLDivElement;
     this.errorBox = this.root.querySelector(".tic-error") as HTMLDivElement;
     this.header = this.root.querySelector(".tic-header") as HTMLDivElement;
+    this.resizeHandle = this.root.querySelector(
+      ".tic-resize-handle",
+    ) as HTMLDivElement;
     this.analyzeButton = this.root.querySelector(
       '[data-action="manual"]',
     ) as HTMLButtonElement;
 
     this.bindEvents();
     document.documentElement.appendChild(this.root);
+    if (this.options.detachedPanel) {
+      this.root.dataset.panel = "true";
+    }
   }
 
   setSettings(settings: CopilotSettings): void {
     this.backendInput.value = settings.backendUrl;
     this.ignoredSpeakerInput.value = settings.ignoredSpeakerName ?? "";
     this.autoDetectInput.checked = settings.autoDetect;
+    if (settings.overlaySize) {
+      this.setSize(settings.overlaySize.width, settings.overlaySize.height);
+    }
     if (settings.overlayPosition) {
       this.setPosition(settings.overlayPosition.left, settings.overlayPosition.top);
     }
@@ -198,6 +231,10 @@ export class CopilotOverlay {
     }
   }
 
+  setDetached(hidden: boolean): void {
+    this.root.hidden = hidden;
+  }
+
   private bindEvents(): void {
     this.root.addEventListener("mousedown", (event) => {
       const target = event.target as HTMLElement;
@@ -229,6 +266,10 @@ export class CopilotOverlay {
         this.handlers.onClearHistory?.();
       }
 
+      if (action === "detach") {
+        this.handlers.onDetachPanel?.();
+      }
+
       if (action === "minimize") {
         this.toggleMinimized();
       }
@@ -249,6 +290,10 @@ export class CopilotOverlay {
     });
 
     this.header.addEventListener("pointerdown", (event) => {
+      if (this.options.detachedPanel) {
+        return;
+      }
+
       const target = event.target as HTMLElement;
       if (target.closest("button")) {
         return;
@@ -299,6 +344,53 @@ export class CopilotOverlay {
       this.root.style.transform = "";
       this.handlers.onSettingsChange({ overlayPosition: undefined });
     });
+
+    this.resizeHandle.addEventListener("pointerdown", (event) => {
+      if (this.options.detachedPanel) {
+        return;
+      }
+
+      if (this.minimized) {
+        return;
+      }
+
+      const rect = this.root.getBoundingClientRect();
+      this.setPosition(rect.left, rect.top);
+      this.resizeState = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        startWidth: rect.width,
+        startHeight: rect.height,
+      };
+      this.resizeHandle.setPointerCapture(event.pointerId);
+      this.root.dataset.resizing = "true";
+      event.preventDefault();
+    });
+
+    this.resizeHandle.addEventListener("pointermove", (event) => {
+      if (!this.resizeState || event.pointerId !== this.resizeState.pointerId) {
+        return;
+      }
+
+      this.setSize(
+        this.resizeState.startWidth + event.clientX - this.resizeState.startX,
+        this.resizeState.startHeight + event.clientY - this.resizeState.startY,
+      );
+      this.keepInViewport();
+    });
+
+    this.resizeHandle.addEventListener("pointerup", (event) => {
+      if (!this.resizeState || event.pointerId !== this.resizeState.pointerId) {
+        return;
+      }
+
+      this.finishResize();
+    });
+
+    this.resizeHandle.addEventListener("pointercancel", () => {
+      this.finishResize();
+    });
   }
 
   private submitManual(): void {
@@ -313,6 +405,9 @@ export class CopilotOverlay {
   private toggleMinimized(): void {
     this.minimized = !this.minimized;
     this.root.dataset.minimized = String(this.minimized);
+    if (!this.minimized) {
+      this.keepInViewport();
+    }
   }
 
   private setQuestion(question: string): void {
@@ -335,12 +430,18 @@ export class CopilotOverlay {
   private setPosition(left: number, top: number): void {
     const rect = this.root.getBoundingClientRect();
     const nextLeft = Math.min(
-      Math.max(left, 8),
-      Math.max(window.innerWidth - rect.width - 8, 8),
+      Math.max(left, CopilotOverlay.VIEWPORT_MARGIN),
+      Math.max(
+        window.innerWidth - rect.width - CopilotOverlay.VIEWPORT_MARGIN,
+        CopilotOverlay.VIEWPORT_MARGIN,
+      ),
     );
     const nextTop = Math.min(
-      Math.max(top, 8),
-      Math.max(window.innerHeight - rect.height - 8, 8),
+      Math.max(top, CopilotOverlay.VIEWPORT_MARGIN),
+      Math.max(
+        window.innerHeight - rect.height - CopilotOverlay.VIEWPORT_MARGIN,
+        CopilotOverlay.VIEWPORT_MARGIN,
+      ),
     );
 
     this.root.style.left = `${nextLeft}px`;
@@ -348,11 +449,58 @@ export class CopilotOverlay {
     this.root.style.transform = "none";
   }
 
+  private setSize(width: number, height: number): void {
+    const rect = this.root.getBoundingClientRect();
+    const left = rect.left || CopilotOverlay.VIEWPORT_MARGIN;
+    const top = rect.top || CopilotOverlay.VIEWPORT_MARGIN;
+    const maxWidth = Math.max(
+      CopilotOverlay.MIN_WIDTH,
+      window.innerWidth - left - CopilotOverlay.VIEWPORT_MARGIN,
+    );
+    const maxHeight = Math.max(
+      CopilotOverlay.MIN_HEIGHT,
+      window.innerHeight - top - CopilotOverlay.VIEWPORT_MARGIN,
+    );
+    const nextWidth = Math.min(
+      Math.max(width, CopilotOverlay.MIN_WIDTH),
+      maxWidth,
+    );
+    const nextHeight = Math.min(
+      Math.max(height, CopilotOverlay.MIN_HEIGHT),
+      maxHeight,
+    );
+
+    this.root.style.width = `${Math.round(nextWidth)}px`;
+    this.root.style.height = `${Math.round(nextHeight)}px`;
+    this.root.style.maxHeight = "none";
+  }
+
+  private keepInViewport(): void {
+    const rect = this.root.getBoundingClientRect();
+    this.setPosition(rect.left, rect.top);
+  }
+
   private finishDrag(): void {
     const rect = this.root.getBoundingClientRect();
     this.dragState = undefined;
     delete this.root.dataset.dragging;
     this.handlers.onSettingsChange({
+      overlayPosition: {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+      },
+    });
+  }
+
+  private finishResize(): void {
+    const rect = this.root.getBoundingClientRect();
+    this.resizeState = undefined;
+    delete this.root.dataset.resizing;
+    this.handlers.onSettingsChange({
+      overlaySize: {
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      },
       overlayPosition: {
         left: Math.round(rect.left),
         top: Math.round(rect.top),

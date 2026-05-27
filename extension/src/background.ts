@@ -3,6 +3,7 @@ import type {
   BackgroundAnalyzeReply,
   BackgroundMessage,
   CopilotSettings,
+  LatestTranscriptReply,
   AnalyzeStreamMessage,
   AnalyzeStreamStartMessage,
 } from "./types";
@@ -12,7 +13,21 @@ const DEFAULT_SETTINGS: CopilotSettings = {
   autoDetect: true,
   ignoredSpeakerName: "",
   overlayPosition: undefined,
+  overlaySize: undefined,
 };
+
+const LAST_TEAMS_TAB_ID_KEY = "lastTeamsTabId";
+const TEAMS_URL_PATTERNS = [
+  "https://teams.microsoft.com/*",
+  "https://*.teams.microsoft.com/*",
+  "https://teams.live.com/*",
+  "https://*.teams.live.com/*",
+  "https://teams.cloud.microsoft/*",
+  "https://*.teams.cloud.microsoft/*",
+];
+
+let lastTeamsTabId: number | undefined;
+let detachedPanelWindowId: number | undefined;
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
@@ -40,6 +55,52 @@ chrome.runtime.onMessage.addListener(
       return true;
     }
 
+    if (message.type === "OPEN_DETACHED_PANEL") {
+      rememberTeamsTab(_sender.tab)
+        .then(openDetachedPanel)
+        .then(() => sendResponse({ ok: true }))
+        .catch((error: unknown) => {
+          sendResponse({
+            ok: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Could not open separate window.",
+          });
+        });
+      return true;
+    }
+
+    if (message.type === "GET_LATEST_TRANSCRIPT") {
+      getLatestTranscriptFromTeamsTab()
+        .then(sendResponse)
+        .catch((error: unknown) => {
+          sendResponse({
+            ok: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Could not read latest transcript from Teams.",
+          } satisfies LatestTranscriptReply);
+        });
+      return true;
+    }
+
+    if (message.type === "RESTORE_IN_PAGE_OVERLAY") {
+      restoreInPageOverlay()
+        .then(() => sendResponse({ ok: true }))
+        .catch((error: unknown) => {
+          sendResponse({
+            ok: false,
+            error:
+              error instanceof Error
+                ? error.message
+                : "Could not restore Teams overlay.",
+          });
+        });
+      return true;
+    }
+
     if (message.type === "ANALYZE_QUESTION") {
       analyzeQuestion(message)
         .then(sendResponse)
@@ -61,6 +122,8 @@ chrome.runtime.onConnect.addListener((port) => {
     return;
   }
 
+  void rememberTeamsTab(port.sender?.tab);
+
   const controller = new AbortController();
   port.onDisconnect.addListener(() => {
     controller.abort();
@@ -81,6 +144,12 @@ chrome.runtime.onConnect.addListener((port) => {
       },
     );
   });
+});
+
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === detachedPanelWindowId) {
+    detachedPanelWindowId = undefined;
+  }
 });
 
 async function analyzeQuestion(
@@ -145,6 +214,237 @@ function getSettings(): Promise<CopilotSettings> {
   return new Promise((resolve) => {
     chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
       resolve({ ...DEFAULT_SETTINGS, ...settings });
+    });
+  });
+}
+
+async function openDetachedPanel(): Promise<void> {
+  if (detachedPanelWindowId !== undefined) {
+    const existingWindow = await getWindow(detachedPanelWindowId).catch(() => undefined);
+    if (existingWindow) {
+      await updateWindow(detachedPanelWindowId, { focused: true });
+      return;
+    }
+  }
+
+  const createdWindow = await createPanelWindow();
+  detachedPanelWindowId = createdWindow.id;
+}
+
+function createPanelWindow(): Promise<chrome.windows.Window> {
+  return new Promise((resolve, reject) => {
+    chrome.windows.create(
+      {
+        url: chrome.runtime.getURL("panel.html"),
+        type: "popup",
+        width: 520,
+        height: 720,
+        focused: true,
+      },
+      (createdWindow) => {
+        const error = chrome.runtime.lastError;
+        if (error) {
+          reject(new Error(error.message));
+          return;
+        }
+
+        if (!createdWindow) {
+          reject(new Error("Chrome did not create the panel window."));
+          return;
+        }
+
+        resolve(createdWindow);
+      },
+    );
+  });
+}
+
+function getWindow(windowId: number): Promise<chrome.windows.Window> {
+  return new Promise((resolve, reject) => {
+    chrome.windows.get(windowId, (existingWindow) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+
+      resolve(existingWindow);
+    });
+  });
+}
+
+function updateWindow(
+  windowId: number,
+  updateInfo: chrome.windows.UpdateInfo,
+): Promise<chrome.windows.Window> {
+  return new Promise((resolve, reject) => {
+    chrome.windows.update(windowId, updateInfo, (updatedWindow) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+
+      if (!updatedWindow) {
+        reject(new Error("Chrome did not focus the panel window."));
+        return;
+      }
+
+      resolve(updatedWindow);
+    });
+  });
+}
+
+async function getLatestTranscriptFromTeamsTab(): Promise<LatestTranscriptReply> {
+  const teamsTabId = await resolveTeamsTabId();
+  if (teamsTabId === undefined) {
+    return {
+      ok: false,
+      error: "Could not find an open Teams tab. Open Teams, then open the separate window from the overlay.",
+    };
+  }
+
+  return sendTabMessage<LatestTranscriptReply>(teamsTabId, {
+    type: "READ_LATEST_TRANSCRIPT",
+  });
+}
+
+async function restoreInPageOverlay(): Promise<void> {
+  const teamsTabId = await resolveTeamsTabId();
+  if (teamsTabId === undefined) {
+    return;
+  }
+
+  await sendTabMessage(teamsTabId, {
+    type: "SET_IN_PAGE_OVERLAY_VISIBLE",
+    visible: true,
+  });
+}
+
+async function rememberTeamsTab(tab?: chrome.tabs.Tab): Promise<void> {
+  if (tab?.id === undefined || !isTeamsUrl(tab.url)) {
+    return;
+  }
+
+  lastTeamsTabId = tab.id;
+  await setSessionValue(LAST_TEAMS_TAB_ID_KEY, tab.id);
+}
+
+async function resolveTeamsTabId(): Promise<number | undefined> {
+  if (lastTeamsTabId !== undefined && (await canReadFromTeamsTab(lastTeamsTabId))) {
+    return lastTeamsTabId;
+  }
+
+  const storedTabId = await getStoredTeamsTabId();
+  if (storedTabId !== undefined && (await canReadFromTeamsTab(storedTabId))) {
+    lastTeamsTabId = storedTabId;
+    return storedTabId;
+  }
+
+  const fallbackTab = await findOpenTeamsTab();
+  if (fallbackTab?.id !== undefined) {
+    await rememberTeamsTab(fallbackTab);
+    return fallbackTab.id;
+  }
+
+  return undefined;
+}
+
+async function canReadFromTeamsTab(tabId: number): Promise<boolean> {
+  const tab = await getTab(tabId).catch(() => undefined);
+  return Boolean(tab?.id !== undefined && isTeamsUrl(tab.url));
+}
+
+function getStoredTeamsTabId(): Promise<number | undefined> {
+  return getSessionValue(LAST_TEAMS_TAB_ID_KEY).then((value) => {
+    return typeof value === "number" ? value : undefined;
+  });
+}
+
+function findOpenTeamsTab(): Promise<chrome.tabs.Tab | undefined> {
+  return new Promise((resolve) => {
+    chrome.tabs.query({ url: TEAMS_URL_PATTERNS }, (tabs) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        resolve(undefined);
+        return;
+      }
+
+      resolve(tabs.find((tab) => tab.id !== undefined && isTeamsUrl(tab.url)));
+    });
+  });
+}
+
+function getTab(tabId: number): Promise<chrome.tabs.Tab> {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.get(tabId, (tab) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+
+      resolve(tab);
+    });
+  });
+}
+
+function isTeamsUrl(url?: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    return (
+      parsedUrl.protocol === "https:" &&
+      (parsedUrl.hostname === "teams.microsoft.com" ||
+        parsedUrl.hostname.endsWith(".teams.microsoft.com") ||
+        parsedUrl.hostname === "teams.live.com" ||
+        parsedUrl.hostname.endsWith(".teams.live.com") ||
+        parsedUrl.hostname === "teams.cloud.microsoft" ||
+        parsedUrl.hostname.endsWith(".teams.cloud.microsoft"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getSessionValue(key: string): Promise<unknown> {
+  return new Promise((resolve) => {
+    chrome.storage.session.get(key, (items) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        resolve(undefined);
+        return;
+      }
+
+      resolve(items[key]);
+    });
+  });
+}
+
+function setSessionValue(key: string, value: unknown): Promise<void> {
+  return new Promise((resolve) => {
+    chrome.storage.session.set({ [key]: value }, () => {
+      resolve();
+    });
+  });
+}
+
+function sendTabMessage<TResponse>(
+  tabId: number,
+  message: unknown,
+): Promise<TResponse> {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, message, (response: TResponse) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+
+      resolve(response);
     });
   });
 }

@@ -34,7 +34,21 @@ export interface CopilotSettings {
     left: number;
     top: number;
   };
+  overlaySize?: {
+    width: number;
+    height: number;
+  };
 }
+
+export type LatestTranscriptReply =
+  | {
+      ok: true;
+      question: string;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
 
 export type BackgroundMessage =
   | {
@@ -47,6 +61,24 @@ export type BackgroundMessage =
   | {
       type: "SAVE_SETTINGS";
       payload: Partial<CopilotSettings>;
+    }
+  | {
+      type: "OPEN_DETACHED_PANEL";
+    }
+  | {
+      type: "GET_LATEST_TRANSCRIPT";
+    }
+  | {
+      type: "RESTORE_IN_PAGE_OVERLAY";
+    };
+
+export type ContentScriptMessage =
+  | {
+      type: "READ_LATEST_TRANSCRIPT";
+    }
+  | {
+      type: "SET_IN_PAGE_OVERLAY_VISIBLE";
+      visible: boolean;
     };
 
 export interface AnalyzeStreamStartMessage {

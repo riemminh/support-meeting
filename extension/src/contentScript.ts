@@ -3,6 +3,7 @@ import type {
   AnalyzeRequest,
   AnalyzeStreamMessage,
   BackgroundAnalyzeReply,
+  BackgroundTranslateReply,
   BackgroundMessage,
   CopilotSettings,
   ChatMessage,
@@ -71,6 +72,9 @@ const overlay = new CopilotOverlay({
   },
   onDetachPanel: () => {
     openDetachedPanel();
+  },
+  onTranslateText: (text) => {
+    return translateText(text);
   },
 });
 
@@ -229,11 +233,18 @@ function getLatestVisibleTranscriptText(): string | undefined {
   return getLatestOpposingTranscriptEntry()?.text;
 }
 
-function getLatestNOpposingEntries(n: number): TranscriptEntry[] {
+function getLatestNOpposingEntries(
+  n: number,
+  options: { groupConsecutiveTurns?: boolean } = {},
+): TranscriptEntry[] {
+  const { groupConsecutiveTurns = true } = options;
   const entries = collectVisibleTranscriptEntries();
   const opposingEntries = entries.filter((entry) => !isIgnoredSpeaker(entry.speaker));
 
   const lastN = opposingEntries.slice(-n);
+  if (!groupConsecutiveTurns) {
+    return lastN;
+  }
 
   const grouped: TranscriptEntry[] = [];
   for (const entry of lastN) {
@@ -779,17 +790,25 @@ async function analyzeTranscriptOrQuestion(
 
 function readLatestTranscriptForPanel(linesToGrab = 1): LatestTranscriptReply {
   const normalizedLinesToGrab = Math.min(Math.max(linesToGrab, 1), 10);
-  const selected = window.getSelection()?.toString().trim() ?? "";
-  const latestEntries =
-    normalizedLinesToGrab > 1
-      ? formatTranscriptEntries(getLatestNOpposingEntries(normalizedLinesToGrab))
-      : "";
+  const selected = cleanTranscriptBlock(window.getSelection()?.toString() ?? "");
+  if (selected) {
+    return { ok: true, question: selected };
+  }
+
+  if (normalizedLinesToGrab > 1) {
+    const latestEntries = formatTranscriptEntries(
+      getLatestNOpposingEntries(normalizedLinesToGrab, {
+        groupConsecutiveTurns: false,
+      }),
+    );
+
+    if (latestEntries.trim()) {
+      return { ok: true, question: latestEntries };
+    }
+  }
+
   const candidate =
-    selected ||
-    latestEntries ||
-    getLatestOpposingTranscriptQuestion()?.text ||
-    getLatestVisibleTranscriptText() ||
-    "";
+    getLatestOpposingTranscriptQuestion()?.text || getLatestVisibleTranscriptText() || "";
   const question = extractCurrentInterviewTurn(candidate);
 
   if (!question?.trim()) {
@@ -815,6 +834,25 @@ function formatTranscriptEntries(entries: TranscriptEntry[]): string {
     .join("\n");
 }
 
+function cleanTranscriptBlock(text: string): string | undefined {
+  const lines = text
+    .split(/\n+/)
+    .map((line) => normalizeTranscriptText(line))
+    .filter(
+      (line) =>
+        line &&
+        !isTranscriptUiNoise(line) &&
+        !looksLikeUrlOrNavigationNoise(line),
+    );
+
+  const cleaned = lines.join("\n").trim();
+  if (!cleaned || isTranscriptUiNoise(cleaned) || looksLikeUrlOrNavigationNoise(cleaned)) {
+    return undefined;
+  }
+
+  return cleaned;
+}
+
 function openDetachedPanel(): void {
   sendMessage<{ ok: true } | { ok: false; error: string }>({
     type: "OPEN_DETACHED_PANEL",
@@ -832,6 +870,19 @@ function openDetachedPanel(): void {
         error instanceof Error ? error.message : "Could not open separate window.",
       );
     });
+}
+
+async function translateText(text: string): Promise<string> {
+  const reply = await sendMessage<BackgroundTranslateReply>({
+    type: "TRANSLATE_TEXT",
+    text,
+  });
+
+  if (!reply.ok) {
+    throw new Error(reply.error);
+  }
+
+  return reply.data.translation;
 }
 
 function extractCurrentInterviewTurn(input: string): string | undefined {
@@ -902,7 +953,9 @@ function saveToConversationHistory(question: string, answer: string): void {
 }
 
 function pickTranscriptIntoOverlay(selectedText?: string): void {
-  const selected = selectedText ?? window.getSelection()?.toString().trim() ?? "";
+  const selected = cleanTranscriptBlock(
+    selectedText ?? window.getSelection()?.toString() ?? "",
+  );
   
   if (selected) {
     overlay.setDraft(
@@ -913,7 +966,9 @@ function pickTranscriptIntoOverlay(selectedText?: string): void {
   }
 
   const n = overlay.linesToGrab;
-  const entries = getLatestNOpposingEntries(n);
+  const entries = getLatestNOpposingEntries(n, {
+    groupConsecutiveTurns: n === 1,
+  });
 
   if (entries.length === 0) {
     overlay.setError(

@@ -1,6 +1,7 @@
 import type {
   AnalyzeRequest,
   AnalyzeStreamMessage,
+  BackgroundTranslateReply,
   BackgroundMessage,
   ChatMessage,
   CopilotSettings,
@@ -66,12 +67,20 @@ class PanelView {
           </div>
           <div class="tic-status"></div>
           <div class="tic-question" hidden>
-            <div class="tic-label">Question</div>
+            <div class="tic-box-header">
+              <div class="tic-label">Question</div>
+              <button class="tic-translate-button" data-action="translate-question">Dịch</button>
+            </div>
             <div data-slot="question"></div>
+            <div class="tic-translation" data-slot="question-translation" hidden></div>
           </div>
           <div class="tic-answer" hidden>
-            <div class="tic-label">Suggested answer</div>
+            <div class="tic-box-header">
+              <div class="tic-label">Suggested answer</div>
+              <button class="tic-translate-button" data-action="translate-answer">Dịch</button>
+            </div>
             <div data-slot="answer"></div>
+            <div class="tic-translation" data-slot="answer-translation" hidden></div>
           </div>
           <div class="tic-error" hidden></div>
           <div class="tic-status">Keep this window outside the shared Teams tab/window.</div>
@@ -118,6 +127,7 @@ class PanelView {
     if (answerSlot) {
       answerSlot.textContent = "";
     }
+    this.clearTranslation("answer");
     this.setStatus("Streaming suggestion...");
     this.analyzeButton.disabled = true;
   }
@@ -168,6 +178,14 @@ class PanelView {
         restoreInPageOverlay();
       }
 
+      if (action === "translate-question") {
+        void this.translateSlot("question");
+      }
+
+      if (action === "translate-answer") {
+        void this.translateSlot("answer");
+      }
+
       if (action === "clear-history") {
         conversationHistory = [];
         this.setDraft("", "Conversation history cleared.");
@@ -208,6 +226,7 @@ class PanelView {
     if (questionSlot) {
       questionSlot.textContent = question;
     }
+    this.clearTranslation("question");
   }
 
   private setStatus(message: string): void {
@@ -217,6 +236,49 @@ class PanelView {
   private clearError(): void {
     this.errorBox.hidden = true;
     this.errorBox.textContent = "";
+  }
+
+  private async translateSlot(slotName: "question" | "answer"): Promise<void> {
+    const textSlot = document.querySelector(`[data-slot="${slotName}"]`);
+    const text = textSlot?.textContent?.trim() ?? "";
+    if (!text) {
+      return;
+    }
+
+    this.setTranslation(slotName, "Đang dịch...");
+    try {
+      const translation = await translateText(text);
+      this.setTranslation(slotName, translation);
+    } catch (error) {
+      this.setTranslation(
+        slotName,
+        error instanceof Error ? error.message : "Không dịch được đoạn này.",
+      );
+    }
+  }
+
+  private setTranslation(slotName: "question" | "answer", translation: string): void {
+    const translationSlot = document.querySelector(
+      `[data-slot="${slotName}-translation"]`,
+    );
+    if (!translationSlot) {
+      return;
+    }
+
+    translationSlot.textContent = translation;
+    (translationSlot as HTMLElement).hidden = false;
+  }
+
+  private clearTranslation(slotName: "question" | "answer"): void {
+    const translationSlot = document.querySelector(
+      `[data-slot="${slotName}-translation"]`,
+    );
+    if (!translationSlot) {
+      return;
+    }
+
+    translationSlot.textContent = "";
+    (translationSlot as HTMLElement).hidden = true;
   }
 }
 
@@ -311,6 +373,19 @@ function streamAnalyzeQuestion(payload: AnalyzeRequest): void {
   });
 
   port.postMessage({ type: "START", payload });
+}
+
+async function translateText(text: string): Promise<string> {
+  const reply = await sendMessage<BackgroundTranslateReply>({
+    type: "TRANSLATE_TEXT",
+    text,
+  });
+
+  if (!reply.ok) {
+    throw new Error(reply.error);
+  }
+
+  return reply.data.translation;
 }
 
 function saveToConversationHistory(question: string, answer: string): void {

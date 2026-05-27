@@ -247,12 +247,43 @@
 }
 
 .tic-label {
-  margin-bottom: 4px;
   color: #5f6368;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+.tic-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tic-translate-button {
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid rgba(32, 33, 36, 0.14);
+  border-radius: 5px;
+  color: #315be0;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tic-translate-button:hover {
+  background: #edf2ff;
+}
+
+.tic-translation {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(32, 33, 36, 0.12);
+  color: #3c4043;
 }
 
 .tic-settings {

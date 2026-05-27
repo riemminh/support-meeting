@@ -20,6 +20,15 @@ export interface AnalyzeResponse {
   };
 }
 
+export interface TranslateResponse {
+  translation: string;
+  model: string;
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+  };
+}
+
 export interface AnalyzeErrorResponse {
   error: string;
 }
@@ -50,6 +59,16 @@ export type LatestTranscriptReply =
       error: string;
     };
 
+export type BackgroundTranslateReply =
+  | {
+      ok: true;
+      data: TranslateResponse;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
 export type BackgroundMessage =
   | {
       type: "ANALYZE_QUESTION";
@@ -71,6 +90,10 @@ export type BackgroundMessage =
     }
   | {
       type: "RESTORE_IN_PAGE_OVERLAY";
+    }
+  | {
+      type: "TRANSLATE_TEXT";
+      text: string;
     };
 
 export type ContentScriptMessage =

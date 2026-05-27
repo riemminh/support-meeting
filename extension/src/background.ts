@@ -1,9 +1,11 @@
 import type {
   AnalyzeResponse,
   BackgroundAnalyzeReply,
+  BackgroundTranslateReply,
   BackgroundMessage,
   CopilotSettings,
   LatestTranscriptReply,
+  TranslateResponse,
   AnalyzeStreamMessage,
   AnalyzeStreamStartMessage,
 } from "./types";
@@ -97,6 +99,18 @@ chrome.runtime.onMessage.addListener(
                 ? error.message
                 : "Could not restore Teams overlay.",
           });
+        });
+      return true;
+    }
+
+    if (message.type === "TRANSLATE_TEXT") {
+      translateText(message.text)
+        .then(sendResponse)
+        .catch((error: unknown) => {
+          sendResponse({
+            ok: false,
+            error: error instanceof Error ? error.message : "Unknown translation error",
+          } satisfies BackgroundTranslateReply);
         });
       return true;
     }
@@ -204,6 +218,50 @@ function isAnalyzeResponse(data: unknown): data is AnalyzeResponse {
     "model" in data &&
     typeof data.model === "string"
   );
+}
+
+function isTranslateResponse(data: unknown): data is TranslateResponse {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "translation" in data &&
+    typeof data.translation === "string" &&
+    "model" in data &&
+    typeof data.model === "string"
+  );
+}
+
+async function translateText(text: string): Promise<BackgroundTranslateReply> {
+  const settings = await getSettings();
+  const response = await fetch(`${settings.backendUrl.replace(/\/$/, "")}/translate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text }),
+  });
+
+  const data = (await response.json().catch(() => undefined)) as unknown;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      error:
+        getErrorMessage(data) ?? `Backend returned HTTP ${response.status}`,
+    };
+  }
+
+  if (!isTranslateResponse(data)) {
+    return {
+      ok: false,
+      error: "Backend response did not include a translation.",
+    };
+  }
+
+  return {
+    ok: true,
+    data,
+  };
 }
 
 function getErrorMessage(data: unknown): string | undefined {

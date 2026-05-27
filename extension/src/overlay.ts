@@ -6,6 +6,7 @@ export interface OverlayHandlers {
   onSettingsChange(settings: Partial<CopilotSettings>): void;
   onClearHistory?(): void;
   onDetachPanel?(): void;
+  onTranslateText?(text: string): Promise<string>;
 }
 
 export interface OverlayOptions {
@@ -92,12 +93,20 @@ export class CopilotOverlay {
         </div>
         <div class="tic-status"></div>
         <div class="tic-question" hidden>
-          <div class="tic-label">Question</div>
+          <div class="tic-box-header">
+            <div class="tic-label">Question</div>
+            <button class="tic-translate-button" data-action="translate-question">Dịch</button>
+          </div>
           <div data-slot="question"></div>
+          <div class="tic-translation" data-slot="question-translation" hidden></div>
         </div>
         <div class="tic-answer" hidden>
-          <div class="tic-label">Suggested answer</div>
+          <div class="tic-box-header">
+            <div class="tic-label">Suggested answer</div>
+            <button class="tic-translate-button" data-action="translate-answer">Dịch</button>
+          </div>
           <div data-slot="answer"></div>
+          <div class="tic-translation" data-slot="answer-translation" hidden></div>
         </div>
         <div class="tic-error" hidden></div>
         <div class="tic-status">
@@ -177,6 +186,7 @@ export class CopilotOverlay {
     if (answerSlot) {
       answerSlot.textContent = "";
     }
+    this.clearTranslation("answer");
     this.setStatus("Streaming suggestion...");
     this.analyzeButton.disabled = true;
   }
@@ -203,6 +213,7 @@ export class CopilotOverlay {
     if (answerSlot) {
       answerSlot.textContent = response.answer;
     }
+    this.clearTranslation("answer");
     this.setStatus(`Suggestion ready from ${response.model}.`);
   }
 
@@ -244,7 +255,12 @@ export class CopilotOverlay {
       const actionButton = target.closest<HTMLElement>("[data-action]");
       if (actionButton) {
         const action = actionButton.dataset.action;
-        if (action === "selection" || action === "manual" || action === "clear-history") {
+        if (
+          action === "selection" ||
+          action === "manual" ||
+          action === "clear-history" ||
+          action?.startsWith("translate-")
+        ) {
           event.preventDefault();
         }
       }
@@ -267,6 +283,14 @@ export class CopilotOverlay {
 
       if (action === "clear-history") {
         this.handlers.onClearHistory?.();
+      }
+
+      if (action === "translate-question") {
+        void this.translateSlot("question");
+      }
+
+      if (action === "translate-answer") {
+        void this.translateSlot("answer");
       }
 
       if (action === "detach") {
@@ -419,6 +443,7 @@ export class CopilotOverlay {
     if (questionSlot) {
       questionSlot.textContent = question;
     }
+    this.clearTranslation("question");
   }
 
   private setStatus(message: string): void {
@@ -428,6 +453,54 @@ export class CopilotOverlay {
   private clearError(): void {
     this.errorBox.hidden = true;
     this.errorBox.textContent = "";
+  }
+
+  private async translateSlot(slotName: "question" | "answer"): Promise<void> {
+    const textSlot = this.root.querySelector(`[data-slot="${slotName}"]`);
+    const text = textSlot?.textContent?.trim() ?? "";
+    if (!text) {
+      return;
+    }
+
+    if (!this.handlers.onTranslateText) {
+      this.setTranslation(slotName, "Không có chức năng dịch.");
+      return;
+    }
+
+    this.setTranslation(slotName, "Đang dịch...");
+    try {
+      const translation = await this.handlers.onTranslateText(text);
+      this.setTranslation(slotName, translation);
+    } catch (error) {
+      this.setTranslation(
+        slotName,
+        error instanceof Error ? error.message : "Không dịch được đoạn này.",
+      );
+    }
+  }
+
+  private setTranslation(slotName: "question" | "answer", translation: string): void {
+    const translationSlot = this.root.querySelector(
+      `[data-slot="${slotName}-translation"]`,
+    );
+    if (!translationSlot) {
+      return;
+    }
+
+    translationSlot.textContent = translation;
+    (translationSlot as HTMLElement).hidden = false;
+  }
+
+  private clearTranslation(slotName: "question" | "answer"): void {
+    const translationSlot = this.root.querySelector(
+      `[data-slot="${slotName}-translation"]`,
+    );
+    if (!translationSlot) {
+      return;
+    }
+
+    translationSlot.textContent = "";
+    (translationSlot as HTMLElement).hidden = true;
   }
 
   private setPosition(left: number, top: number): void {

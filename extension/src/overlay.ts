@@ -74,7 +74,10 @@ export class CopilotOverlay {
         <div class="tic-row" style="align-items: center; gap: 8px;">
           <button class="tic-button tic-button-primary" data-action="manual">Analyze transcript</button>
           <button class="tic-button" data-action="selection">Use selection</button>
-          <input class="tic-lines" type="number" min="1" max="10" value="1" title="Number of lines to grab" aria-label="Lines to grab" />
+          <label class="tic-lines-control" title="Number of latest transcript lines to grab">
+            <span>Lines</span>
+            <input class="tic-lines" type="number" min="1" max="10" value="1" aria-label="Lines to grab" />
+          </label>
         </div>
         <div class="tic-settings">
           <input class="tic-url" type="url" aria-label="Backend URL" />

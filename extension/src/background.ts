@@ -72,7 +72,7 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (message.type === "GET_LATEST_TRANSCRIPT") {
-      getLatestTranscriptFromTeamsTab()
+      getLatestTranscriptFromTeamsTab(message.linesToGrab)
         .then(sendResponse)
         .catch((error: unknown) => {
           sendResponse({
@@ -150,6 +150,14 @@ chrome.windows.onRemoved.addListener((windowId) => {
   if (windowId === detachedPanelWindowId) {
     detachedPanelWindowId = undefined;
   }
+});
+
+chrome.action.onClicked.addListener((tab) => {
+  rememberTeamsTab(tab)
+    .then(openDetachedPanel)
+    .catch(() => {
+      // The user can still open the panel from the in-page overlay if Chrome blocks this action.
+    });
 });
 
 async function analyzeQuestion(
@@ -295,7 +303,9 @@ function updateWindow(
   });
 }
 
-async function getLatestTranscriptFromTeamsTab(): Promise<LatestTranscriptReply> {
+async function getLatestTranscriptFromTeamsTab(
+  linesToGrab?: number,
+): Promise<LatestTranscriptReply> {
   const teamsTabId = await resolveTeamsTabId();
   if (teamsTabId === undefined) {
     return {
@@ -306,6 +316,7 @@ async function getLatestTranscriptFromTeamsTab(): Promise<LatestTranscriptReply>
 
   return sendTabMessage<LatestTranscriptReply>(teamsTabId, {
     type: "READ_LATEST_TRANSCRIPT",
+    linesToGrab,
   });
 }
 

@@ -67,6 +67,7 @@ export type BackgroundMessage =
     }
   | {
       type: "GET_LATEST_TRANSCRIPT";
+      linesToGrab?: number;
     }
   | {
       type: "RESTORE_IN_PAGE_OVERLAY";
@@ -75,6 +76,7 @@ export type BackgroundMessage =
 export type ContentScriptMessage =
   | {
       type: "READ_LATEST_TRANSCRIPT";
+      linesToGrab?: number;
     }
   | {
       type: "SET_IN_PAGE_OVERLAY_VISIBLE";

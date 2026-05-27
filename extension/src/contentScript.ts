@@ -118,7 +118,7 @@ function installRuntimeMessageHandlers(): void {
       sendResponse: (response: LatestTranscriptReply | { ok: true }) => void,
     ) => {
       if (message.type === "READ_LATEST_TRANSCRIPT") {
-        sendResponse(readLatestTranscriptForPanel());
+        sendResponse(readLatestTranscriptForPanel(message.linesToGrab));
         return false;
       }
 
@@ -590,8 +590,10 @@ function isTranscriptUiNoise(text: string): boolean {
     /^(rtt|live captions|type a message|invite people|search|chat|chats|meeting chat|meeting chats|people|raise|react|view|controls|notes|apps|more|camera|mic|microphone|share|leave|question|suggested answer)$/i;
 
   const phraseNoise = [
+    /^(\d+\s*)+new notifications?$/i,
     /\bhas context menu\b/i,
     /\bmeeting chats?\b/i,
+    /\bnew notifications?\b/i,
     /\bnew chat\b/i,
     /\bopen chat\b/i,
     /\bstart recording\b/i,
@@ -775,10 +777,16 @@ async function analyzeTranscriptOrQuestion(
   analyzeQuestion(question, source);
 }
 
-function readLatestTranscriptForPanel(): LatestTranscriptReply {
+function readLatestTranscriptForPanel(linesToGrab = 1): LatestTranscriptReply {
+  const normalizedLinesToGrab = Math.min(Math.max(linesToGrab, 1), 10);
   const selected = window.getSelection()?.toString().trim() ?? "";
+  const latestEntries =
+    normalizedLinesToGrab > 1
+      ? formatTranscriptEntries(getLatestNOpposingEntries(normalizedLinesToGrab))
+      : "";
   const candidate =
     selected ||
+    latestEntries ||
     getLatestOpposingTranscriptQuestion()?.text ||
     getLatestVisibleTranscriptText() ||
     "";
@@ -793,6 +801,18 @@ function readLatestTranscriptForPanel(): LatestTranscriptReply {
   }
 
   return { ok: true, question };
+}
+
+function formatTranscriptEntries(entries: TranscriptEntry[]): string {
+  return entries
+    .map((entry) => {
+      if (entry.speaker) {
+        return `${entry.speaker}: ${entry.text}`;
+      }
+
+      return entry.text;
+    })
+    .join("\n");
 }
 
 function openDetachedPanel(): void {

@@ -22,6 +22,7 @@ class PanelView {
   private readonly backendInput: HTMLInputElement;
   private readonly ignoredSpeakerInput: HTMLInputElement;
   private readonly autoDetectInput: HTMLInputElement;
+  private readonly linesInput: HTMLInputElement;
   private readonly status: HTMLDivElement;
   private readonly questionBox: HTMLDivElement;
   private readonly answerBox: HTMLDivElement;
@@ -46,7 +47,11 @@ class PanelView {
           <textarea class="tic-input" placeholder="Paste transcript or one interviewer question..."></textarea>
           <div class="tic-row" style="align-items: center; gap: 8px;">
             <button class="tic-button tic-button-primary" data-action="manual">Analyze transcript</button>
-            <button class="tic-button" data-action="selection">Use selection</button>
+            <button class="tic-button" data-action="selection" title="Use selected text from Teams, or latest transcript if nothing is selected">Use selection</button>
+            <label class="tic-lines-control" title="Number of latest transcript lines to grab">
+              <span>Lines</span>
+              <input class="tic-lines" type="number" min="1" max="10" value="1" aria-label="Lines to grab" />
+            </label>
           </div>
           <div class="tic-settings">
             <input class="tic-url" type="url" aria-label="Backend URL" />
@@ -78,6 +83,7 @@ class PanelView {
     this.backendInput = document.querySelector(".tic-url") as HTMLInputElement;
     this.ignoredSpeakerInput = document.querySelector(".tic-speaker") as HTMLInputElement;
     this.autoDetectInput = document.querySelector(".tic-auto-detect") as HTMLInputElement;
+    this.linesInput = document.querySelector(".tic-lines") as HTMLInputElement;
     this.status = document.querySelector(".tic-status") as HTMLDivElement;
     this.questionBox = document.querySelector(".tic-question") as HTMLDivElement;
     this.answerBox = document.querySelector(".tic-answer") as HTMLDivElement;
@@ -135,6 +141,11 @@ class PanelView {
     this.errorBox.hidden = false;
     this.errorBox.textContent = message;
     this.setStatus("Could not generate suggestion.");
+  }
+
+  get linesToGrab(): number {
+    const val = Number.parseInt(this.linesInput.value, 10);
+    return Number.isNaN(val) ? 1 : Math.min(Math.max(val, 1), 10);
   }
 
   private bindEvents(): void {
@@ -217,12 +228,13 @@ async function initialize(): Promise<void> {
     () => DEFAULT_SETTINGS,
   );
   panel.setSettings(settings);
-  panel.setDraft("", "Separate window ready. Use selection loads text from the Teams tab.");
+  panel.setDraft("", "Separate window ready. Use selection loads selected text or latest transcript from Teams.");
 }
 
 async function loadLatestTranscript(): Promise<void> {
   const reply = await sendMessage<LatestTranscriptReply>({
     type: "GET_LATEST_TRANSCRIPT",
+    linesToGrab: panel.linesToGrab,
   }).catch((error: unknown): LatestTranscriptReply => {
     return {
       ok: false,
@@ -240,7 +252,7 @@ async function loadLatestTranscript(): Promise<void> {
 
   panel.setDraft(
     reply.question,
-    "Transcript loaded from Teams. Click Analyze transcript when ready.",
+    "Selection or transcript loaded from Teams. Click Analyze transcript when ready.",
   );
 }
 

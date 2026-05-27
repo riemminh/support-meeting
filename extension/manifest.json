@@ -3,6 +3,9 @@
   "name": "Teams Interview Copilot",
   "version": "0.1.0",
   "description": "Read Microsoft Teams RTT transcript and suggest interview answers.",
+  "action": {
+    "default_title": "Open Teams Interview Copilot"
+  },
   "permissions": ["storage", "activeTab"],
   "host_permissions": [
     "https://teams.microsoft.com/*",

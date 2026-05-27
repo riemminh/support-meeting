@@ -9,6 +9,7 @@ import type {
 } from "./types";
 
 const MAX_QUESTION_LENGTH = 700;
+const MAX_AUTO_TURN_ENTRIES = 6;
 const DEDUPE_TTL_MS = 90_000;
 const SCAN_DEBOUNCE_MS = 600;
 const DEFAULT_SETTINGS: CopilotSettings = {
@@ -31,9 +32,9 @@ const transcriptSelectors = [
 ];
 
 const questionLeadIns = [
-  /^(can|could|would|will|do|does|did|are|is|have|has|how|what|when|where|why|who|which)\b/i,
-  /^(tell me|walk me|describe|explain)\b/i,
-  /\b(can you|could you|would you|tell me about|walk me through|describe a time|how would you|what would you|why should we|what makes you)\b/i,
+  /^(?:(?:and|also|but|so|then|next|now)\s+)?(can|could|would|will|do|does|did|are|is|have|has|how|what|when|where|why|who|which)\b/i,
+  /^(?:(?:and|also|but|so|then|next|now|please)\s+)?(tell me|walk me|describe|explain|give me|share|talk about)\b/i,
+  /\b(can you|could you|would you|tell me about|walk me through|describe a time|how would you|what would you|why should we|what makes you|what about|how about|i want you to|i'd like you to|please explain|please describe)\b/i,
 ];
 
 let settings: CopilotSettings = DEFAULT_SETTINGS;
@@ -211,20 +212,13 @@ function getLatestOpposingTranscriptEntry(): TranscriptEntry | undefined {
 
 function getLatestOpposingTranscriptQuestion(): TranscriptEntry | undefined {
   const entries = collectVisibleTranscriptEntries();
-  
-  // First, try to find the latest opposing speaker entry that is a question
-  const latestQuestion = [...entries].reverse().find((entry) => {
-    if (isIgnoredSpeaker(entry.speaker)) {
-      return false;
-    }
-    return Boolean(extractLikelyQuestion(entry.text));
-  });
 
-  if (latestQuestion) {
-    return latestQuestion;
+  const latestQuestionTurn = getLatestOpposingQuestionTurn(entries);
+  if (latestQuestionTurn) {
+    return latestQuestionTurn;
   }
 
-  // Second, fall back to the absolute latest entry from the opposing speaker (even if not strictly a question)
+  // Fall back to the absolute latest entry from the opposing speaker (even if not strictly a question).
   const latestEntry = [...entries].reverse().find((entry) => {
     return !isIgnoredSpeaker(entry.speaker);
   });
@@ -237,6 +231,74 @@ function getLatestOpposingTranscriptQuestion(): TranscriptEntry | undefined {
     .reverse()
     .find((candidate) => Boolean(extractLikelyQuestion(candidate)));
   return fallback ? { text: fallback } : undefined;
+}
+
+function getLatestOpposingQuestionTurn(
+  entries: TranscriptEntry[],
+): TranscriptEntry | undefined {
+  const latestTurn = getLatestOpposingTurn(entries);
+  if (latestTurn && extractLikelyQuestion(latestTurn.text)) {
+    return latestTurn;
+  }
+
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    const entry = entries[index];
+    if (isIgnoredSpeaker(entry.speaker)) {
+      continue;
+    }
+
+    if (extractLikelyQuestion(entry.text)) {
+      return buildTranscriptTurnEndingAt(entries, index);
+    }
+  }
+
+  return undefined;
+}
+
+function getLatestOpposingTurn(entries: TranscriptEntry[]): TranscriptEntry | undefined {
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    if (!isIgnoredSpeaker(entries[index].speaker)) {
+      return buildTranscriptTurnEndingAt(entries, index);
+    }
+  }
+
+  return undefined;
+}
+
+function buildTranscriptTurnEndingAt(
+  entries: TranscriptEntry[],
+  endIndex: number,
+): TranscriptEntry {
+  const endEntry = entries[endIndex];
+  const speakerKey = normalizeSpeakerName(endEntry.speaker ?? "");
+  const turnEntries: TranscriptEntry[] = [];
+
+  for (
+    let cursor = endIndex;
+    cursor >= 0 && turnEntries.length < MAX_AUTO_TURN_ENTRIES;
+    cursor -= 1
+  ) {
+    const entry = entries[cursor];
+    if (isIgnoredSpeaker(entry.speaker)) {
+      break;
+    }
+
+    const currentSpeakerKey = normalizeSpeakerName(entry.speaker ?? "");
+    if (speakerKey && currentSpeakerKey !== speakerKey) {
+      break;
+    }
+
+    if (!speakerKey && currentSpeakerKey) {
+      break;
+    }
+
+    turnEntries.unshift(entry);
+  }
+
+  return {
+    speaker: endEntry.speaker,
+    text: normalizeTranscriptText(turnEntries.map((entry) => entry.text).join(" ")),
+  };
 }
 
 function collectVisibleTranscriptEntries(): TranscriptEntry[] {
@@ -252,7 +314,7 @@ function collectVisibleTranscriptEntries(): TranscriptEntry[] {
     }
 
     const text = normalizeTranscriptText(textNode.textContent ?? "");
-    if (!text || looksLikeUrlOrNavigationNoise(text)) {
+    if (!text || isTranscriptUiNoise(text) || looksLikeUrlOrNavigationNoise(text)) {
       continue;
     }
 
@@ -291,7 +353,7 @@ function collectVisibleTranscriptEntries(): TranscriptEntry[] {
           : (node.textContent ?? "");
 
       for (const entry of parseTranscriptEntries(rawText)) {
-        if (looksLikeUrlOrNavigationNoise(entry.text)) {
+        if (isTranscriptUiNoise(entry.text) || looksLikeUrlOrNavigationNoise(entry.text)) {
           continue;
         }
 
@@ -322,6 +384,24 @@ function parseTranscriptEntries(rawText: string): TranscriptEntry[] {
 
   if (lines.length === 0) {
     return [];
+  }
+
+  const colonLineEntries = lines
+    .map((line): TranscriptEntry | undefined => {
+      const lineMatch = line.match(/^([^:]{2,60}):\s*(.{2,})$/);
+      if (!lineMatch || !isLikelySpeakerName(lineMatch[1])) {
+        return undefined;
+      }
+
+      return {
+        speaker: lineMatch[1],
+        text: lineMatch[2],
+      };
+    })
+    .filter((entry): entry is TranscriptEntry => Boolean(entry));
+
+  if (colonLineEntries.length > 0 && colonLineEntries.length === lines.length) {
+    return colonLineEntries;
   }
 
   const colonMatch = normalizeTranscriptText(rawText).match(
@@ -385,38 +465,53 @@ function collectVisibleTextCandidates(): string[] {
       (text) =>
         text.length > 8 &&
         text.length < 1_500 &&
+        !isTranscriptUiNoise(text) &&
         !looksLikeUrlOrNavigationNoise(text),
     );
 }
 
 function extractLikelyQuestion(text: string): string | undefined {
   const cleaned = normalizeTranscriptText(text);
-  if (!cleaned || looksLikeUrlOrNavigationNoise(cleaned)) {
+  if (!cleaned || isTranscriptUiNoise(cleaned) || looksLikeUrlOrNavigationNoise(cleaned)) {
     return undefined;
   }
 
-  const speakerStripped = cleaned.replace(
-    /^(interviewer|recruiter|hiring manager|host|participant|speaker\s*\d+|[^:]{1,40}):\s*/i,
-    "",
-  );
+  const speakerStripped = stripSpeakerPrefix(cleaned);
+  const currentTurn = stripLeadingQuestionFiller(speakerStripped);
 
-  const segments = speakerStripped
+  const segments = currentTurn
     .split(/(?<=[?.!])\s+/)
     .map((segment) => segment.trim())
     .filter(Boolean);
 
-  const directQuestion = [...segments]
-    .reverse()
-    .find((segment) => isLikelyInterviewerQuestion(segment));
-  if (directQuestion) {
-    return clampQuestion(directQuestion);
+  const firstQuestionIndex = segments.findIndex((segment) =>
+    isLikelyInterviewerQuestion(segment),
+  );
+  if (firstQuestionIndex >= 0) {
+    return clampQuestion(segments.slice(firstQuestionIndex).join(" "));
   }
 
-  if (isLikelyInterviewerQuestion(speakerStripped)) {
-    return clampQuestion(speakerStripped);
+  if (isLikelyInterviewerQuestion(currentTurn)) {
+    return clampQuestion(currentTurn);
   }
 
   return undefined;
+}
+
+function stripSpeakerPrefix(text: string): string {
+  return normalizeTranscriptText(text).replace(
+    /^(interviewer|recruiter|hiring manager|host|participant|speaker\s*\d+|[^:]{1,40}):\s*/i,
+    "",
+  );
+}
+
+function stripLeadingQuestionFiller(text: string): string {
+  return normalizeTranscriptText(text)
+    .replace(
+      /^(?:(?:ok|okay|yeah|yep|right|alright|all right|sure|thanks|thank you|so|well|got it|cool|great|nice|hi|hello)(?:\s+riem)?[,.\s]+)+/i,
+      "",
+    )
+    .trim();
 }
 
 function clampQuestion(question: string): string {
@@ -431,9 +526,25 @@ function normalizeTranscriptText(text: string): string {
 }
 
 function isTranscriptUiNoise(text: string): boolean {
-  return /^(rtt|live captions|type a message|invite people|search|chat|people|raise|react|view|controls|notes|apps|more|camera|mic|share|leave)$/i.test(
-    text,
-  );
+  const cleaned = normalizeTranscriptText(text);
+  if (!cleaned) {
+    return true;
+  }
+
+  const exactNoise =
+    /^(rtt|live captions|type a message|invite people|search|chat|chats|meeting chat|meeting chats|people|raise|react|view|controls|notes|apps|more|camera|mic|microphone|share|leave|question|suggested answer)$/i;
+
+  const phraseNoise = [
+    /\bhas context menu\b/i,
+    /\bmeeting chats?\b/i,
+    /\bnew chat\b/i,
+    /\bopen chat\b/i,
+    /\bstart recording\b/i,
+    /\bturn camera\b/i,
+    /\bmute microphone\b/i,
+  ];
+
+  return exactNoise.test(cleaned) || phraseNoise.some((pattern) => pattern.test(cleaned));
 }
 
 function isLikelySpeakerName(text: string): boolean {
@@ -471,9 +582,19 @@ function isLikelyInterviewerQuestion(text: string): boolean {
     return false;
   }
 
-  const words = cleaned.match(/[a-z]+/gi) ?? [];
-  const isDirectQuestion = cleaned.endsWith("?");
-  const minWords = isDirectQuestion ? 3 : 5;
+  const candidate = stripLeadingQuestionFiller(cleaned);
+  if (!candidate) {
+    return false;
+  }
+
+  const words = candidate.match(/[a-z]+/gi) ?? [];
+  const isDirectQuestion = candidate.endsWith("?");
+  const minWords =
+    isDirectQuestion && isShortFollowUpQuestion(candidate)
+      ? 1
+      : isDirectQuestion
+        ? 3
+        : 5;
   if (words.length < minWords) {
     return false;
   }
@@ -481,15 +602,22 @@ function isLikelyInterviewerQuestion(text: string): boolean {
   const rejectedPatterns = [
     /\*{2,}/,
     /^(am|was|were|do|did|have|can|could|should|would)\s+i\b/i,
-    /^(ok|okay|yeah|yep|wait|right|hello|hi)\b/i,
+    /^(wait)\b/i,
     /\b(wait,?\s*wait|there we go|bigger|save the phone question)\b/i,
   ];
 
-  if (rejectedPatterns.some((pattern) => pattern.test(cleaned))) {
+  if (rejectedPatterns.some((pattern) => pattern.test(candidate))) {
     return false;
   }
 
-  return questionLeadIns.some((pattern) => pattern.test(cleaned));
+  return questionLeadIns.some((pattern) => pattern.test(candidate));
+}
+
+function isShortFollowUpQuestion(text: string): boolean {
+  const compact = normalizeTranscriptText(text).replace(/[?!.]+$/, "").trim();
+  return /^(?:(?:and|also|but|so|then|next|now)\s+)?(why|how|what|when|where|who|which)$/i.test(
+    compact,
+  );
 }
 
 function looksLikeUrlOrNavigationNoise(text: string): boolean {
@@ -580,8 +708,7 @@ async function analyzeTranscriptOrQuestion(
   source: AnalyzeRequest["source"],
 ): Promise<void> {
   const candidate = input.trim() || getLatestVisibleTranscriptText() || "";
-  
-  const question = candidate;
+  const question = extractCurrentInterviewTurn(candidate) ?? "";
 
   if (!question.trim()) {
     overlay.setError(
@@ -591,6 +718,26 @@ async function analyzeTranscriptOrQuestion(
   }
 
   analyzeQuestion(question, source);
+}
+
+function extractCurrentInterviewTurn(input: string): string | undefined {
+  const cleaned = normalizeTranscriptText(input);
+  if (!cleaned || isTranscriptUiNoise(cleaned) || looksLikeUrlOrNavigationNoise(cleaned)) {
+    return undefined;
+  }
+
+  const parsedEntries = parseTranscriptEntries(input);
+  if (parsedEntries.length > 1 || parsedEntries.some((entry) => entry.speaker)) {
+    const latestQuestionTurn = getLatestOpposingQuestionTurn(parsedEntries);
+    if (latestQuestionTurn) {
+      return (
+        extractLikelyQuestion(latestQuestionTurn.text) ??
+        clampQuestion(latestQuestionTurn.text)
+      );
+    }
+  }
+
+  return extractLikelyQuestion(cleaned) ?? clampQuestion(cleaned);
 }
 
 function streamAnalyzeQuestion(payload: AnalyzeRequest): void {

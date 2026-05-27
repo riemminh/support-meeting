@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Teams Interview Copilot",
+  "version": "0.1.0",
+  "description": "Read Microsoft Teams RTT transcript and suggest interview answers.",
+  "permissions": ["storage", "activeTab"],
+  "host_permissions": [
+    "https://teams.microsoft.com/*",
+    "https://*.teams.microsoft.com/*",
+    "https://teams.live.com/*",
+    "https://*.teams.live.com/*",
+    "https://teams.cloud.microsoft/*",
+    "https://*.teams.cloud.microsoft/*",
+    "http://localhost:8787/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://teams.microsoft.com/*",
+        "https://*.teams.microsoft.com/*",
+        "https://teams.live.com/*",
+        "https://*.teams.live.com/*",
+        "https://teams.cloud.microsoft/*",
+        "https://*.teams.cloud.microsoft/*"
+      ],
+      "js": ["contentScript.js"],
+      "css": ["overlay.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

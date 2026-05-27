@@ -1,0 +1,262 @@
+.tic-overlay {
+  position: fixed;
+  top: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  width: min(570px, calc(100vw - 36px));
+  max-height: min(680px, calc(100vh - 104px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #202124;
+  background: #ffffff;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 8px;
+  box-shadow: 0 18px 50px rgba(32, 33, 36, 0.24);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.tic-overlay[data-minimized="true"] {
+  width: auto;
+  max-height: none;
+}
+
+.tic-overlay[data-dragging="true"] {
+  user-select: none;
+}
+
+.tic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #3d6bff;
+  color: #ffffff;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tic-overlay[data-dragging="true"] .tic-header {
+  cursor: grabbing;
+}
+
+.tic-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.tic-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  opacity: 0.85;
+}
+
+.tic-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tic-icon-button {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  font: inherit;
+}
+
+.tic-icon-button:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.tic-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  overflow: auto;
+}
+
+.tic-overlay[data-minimized="true"] .tic-body,
+.tic-overlay[data-minimized="true"] .tic-subtitle {
+  display: none;
+}
+
+.tic-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tic-input {
+  min-height: 76px;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: #202124;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tic-input:focus {
+  border-color: #3d6bff;
+  outline: 2px solid rgba(61, 107, 255, 0.16);
+}
+
+.tic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(32, 33, 36, 0.16);
+  border-radius: 7px;
+  color: #202124;
+  background: #f8fafd;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tic-button:hover {
+  background: #edf2ff;
+}
+
+.tic-button-primary {
+  border-color: #3d6bff;
+  color: #ffffff;
+  background: #3d6bff;
+}
+
+.tic-button-primary:hover {
+  background: #315be0;
+}
+
+.tic-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tic-button-sm {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+
+.tic-status {
+  min-height: 18px;
+  color: #5f6368;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tic-question,
+.tic-answer,
+.tic-error {
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tic-question {
+  border: 1px solid rgba(61, 107, 255, 0.2);
+  background: #f3f6ff;
+}
+
+.tic-answer {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border: 1px solid rgba(14, 135, 92, 0.22);
+  background: #f1fbf7;
+}
+
+.tic-error {
+  border: 1px solid rgba(188, 43, 43, 0.22);
+  color: #8c1d18;
+  background: #fff4f2;
+}
+
+.tic-label {
+  margin-bottom: 4px;
+  color: #5f6368;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.tic-settings {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.tic-url,
+.tic-speaker {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 7px;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.tic-lines {
+  width: 48px;
+  min-width: 48px;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 7px;
+  padding: 5px 6px;
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+}
+
+.tic-speaker {
+  grid-column: 1 / -1;
+}
+
+.tic-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3c4043;
+  font-size: 12px;
+  user-select: none;
+}
+
+.tic-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid rgba(32, 33, 36, 0.18);
+  border-radius: 5px;
+  color: #3c4043;
+  background: #f8fafd;
+  font-size: 11px;
+  font-weight: 700;
+}

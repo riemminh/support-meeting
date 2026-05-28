@@ -13,6 +13,7 @@ import type {
 const DEFAULT_SETTINGS: CopilotSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
+  promptMode: "one-on-one",
   ignoredSpeakerName: "",
   overlayPosition: undefined,
   overlaySize: undefined,

@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { LLMProvider, InterviewAnswerResult, InterviewAnswerInput } from "./LLMProvider.js";
 import {
+  buildHistoryAssistantMessage,
   buildInterviewSystemPrompt,
   buildInterviewUserPrompt,
   buildHistoryUserMessage,
@@ -60,21 +61,24 @@ export class AnthropicProvider implements LLMProvider {
       for (const turn of input.history) {
         messages.push({
           role: turn.role,
-          content: turn.role === "user" ? buildHistoryUserMessage(turn.content) : turn.content,
+          content:
+            turn.role === "user"
+              ? buildHistoryUserMessage(turn.content)
+              : buildHistoryAssistantMessage(turn.content),
         });
       }
     }
 
     messages.push({
       role: "user",
-      content: buildInterviewUserPrompt(input.question),
+      content: buildInterviewUserPrompt(input.question, input.promptMode),
     });
 
     const response = await this.client.messages.create({
       model: this.model,
       max_tokens: this.maxTokens,
       temperature: this.temperature,
-      system: buildInterviewSystemPrompt(),
+      system: buildInterviewSystemPrompt(input.promptMode),
       messages,
     });
 
@@ -102,21 +106,24 @@ export class AnthropicProvider implements LLMProvider {
       for (const turn of input.history) {
         messages.push({
           role: turn.role,
-          content: turn.role === "user" ? buildHistoryUserMessage(turn.content) : turn.content,
+          content:
+            turn.role === "user"
+              ? buildHistoryUserMessage(turn.content)
+              : buildHistoryAssistantMessage(turn.content),
         });
       }
     }
 
     messages.push({
       role: "user",
-      content: buildInterviewUserPrompt(input.question),
+      content: buildInterviewUserPrompt(input.question, input.promptMode),
     });
 
     const stream = await this.client.messages.create({
       model: this.model,
       max_tokens: this.maxTokens,
       temperature: this.temperature,
-      system: buildInterviewSystemPrompt(),
+      system: buildInterviewSystemPrompt(input.promptMode),
       messages,
       stream: true,
     });

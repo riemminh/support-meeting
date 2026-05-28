@@ -11,17 +11,20 @@ import type {
 const DEFAULT_SETTINGS: CopilotSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
+  promptMode: "one-on-one",
   ignoredSpeakerName: "",
   overlayPosition: undefined,
   overlaySize: undefined,
 };
 
 let conversationHistory: ChatMessage[] = [];
+let settings: CopilotSettings = DEFAULT_SETTINGS;
 
 class PanelView {
   private readonly manualInput: HTMLTextAreaElement;
   private readonly backendInput: HTMLInputElement;
   private readonly ignoredSpeakerInput: HTMLInputElement;
+  private readonly promptModeSelect: HTMLSelectElement;
   private readonly autoDetectInput: HTMLInputElement;
   private readonly linesInput: HTMLInputElement;
   private readonly status: HTMLDivElement;
@@ -56,6 +59,10 @@ class PanelView {
           </div>
           <div class="tic-settings">
             <input class="tic-url" type="url" aria-label="Backend URL" />
+            <select class="tic-prompt-mode" aria-label="Prompt mode">
+              <option value="one-on-one">1-1 prompt</option>
+              <option value="multiple-speakers">Multiple speakers</option>
+            </select>
             <input class="tic-speaker" type="text" aria-label="Ignore speaker" placeholder="Ignore speaker: your Teams name" />
             <div class="tic-row" style="grid-column: 1 / -1; justify-content: space-between; align-items: center;">
               <label class="tic-checkbox">
@@ -91,6 +98,9 @@ class PanelView {
     this.manualInput = document.querySelector(".tic-input") as HTMLTextAreaElement;
     this.backendInput = document.querySelector(".tic-url") as HTMLInputElement;
     this.ignoredSpeakerInput = document.querySelector(".tic-speaker") as HTMLInputElement;
+    this.promptModeSelect = document.querySelector(
+      ".tic-prompt-mode",
+    ) as HTMLSelectElement;
     this.autoDetectInput = document.querySelector(".tic-auto-detect") as HTMLInputElement;
     this.linesInput = document.querySelector(".tic-lines") as HTMLInputElement;
     this.status = document.querySelector(".tic-status") as HTMLDivElement;
@@ -107,6 +117,7 @@ class PanelView {
   setSettings(settings: CopilotSettings): void {
     this.backendInput.value = settings.backendUrl;
     this.ignoredSpeakerInput.value = settings.ignoredSpeakerName ?? "";
+    this.promptModeSelect.value = settings.promptMode;
     this.autoDetectInput.checked = settings.autoDetect;
   }
 
@@ -193,27 +204,49 @@ class PanelView {
     });
 
     this.backendInput.addEventListener("change", () => {
+      settings = { ...settings, backendUrl: this.backendInput.value.trim() };
       sendMessage({
         type: "SAVE_SETTINGS",
-        payload: { backendUrl: this.backendInput.value.trim() },
+        payload: { backendUrl: settings.backendUrl },
       }).catch(() => {
         this.setError("Could not save extension settings.");
       });
     });
 
     this.ignoredSpeakerInput.addEventListener("change", () => {
+      settings = {
+        ...settings,
+        ignoredSpeakerName: this.ignoredSpeakerInput.value.trim(),
+      };
       sendMessage({
         type: "SAVE_SETTINGS",
-        payload: { ignoredSpeakerName: this.ignoredSpeakerInput.value.trim() },
+        payload: { ignoredSpeakerName: settings.ignoredSpeakerName },
+      }).catch(() => {
+        this.setError("Could not save extension settings.");
+      });
+    });
+
+    this.promptModeSelect.addEventListener("change", () => {
+      settings = {
+        ...settings,
+        promptMode:
+          this.promptModeSelect.value === "multiple-speakers"
+            ? "multiple-speakers"
+            : "one-on-one",
+      };
+      sendMessage({
+        type: "SAVE_SETTINGS",
+        payload: { promptMode: settings.promptMode },
       }).catch(() => {
         this.setError("Could not save extension settings.");
       });
     });
 
     this.autoDetectInput.addEventListener("change", () => {
+      settings = { ...settings, autoDetect: this.autoDetectInput.checked };
       sendMessage({
         type: "SAVE_SETTINGS",
-        payload: { autoDetect: this.autoDetectInput.checked },
+        payload: { autoDetect: settings.autoDetect },
       }).catch(() => {
         this.setError("Could not save extension settings.");
       });
@@ -286,11 +319,42 @@ const panel = new PanelView();
 void initialize();
 
 async function initialize(): Promise<void> {
-  const settings = await sendMessage<CopilotSettings>({ type: "GET_SETTINGS" }).catch(
+  settings = await sendMessage<CopilotSettings>({ type: "GET_SETTINGS" }).catch(
     () => DEFAULT_SETTINGS,
   );
   panel.setSettings(settings);
+  installSettingsListener();
   panel.setDraft("", "Separate window ready. Use selection loads selected text or latest transcript from Teams.");
+}
+
+function installSettingsListener(): void {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "sync") {
+      return;
+    }
+
+    const nextSettings: Partial<CopilotSettings> = {};
+    if (changes.backendUrl?.newValue !== undefined) {
+      nextSettings.backendUrl = String(changes.backendUrl.newValue);
+    }
+    if (changes.autoDetect?.newValue !== undefined) {
+      nextSettings.autoDetect = Boolean(changes.autoDetect.newValue);
+    }
+    if (changes.promptMode?.newValue === "multiple-speakers") {
+      nextSettings.promptMode = "multiple-speakers";
+    }
+    if (changes.promptMode?.newValue === "one-on-one") {
+      nextSettings.promptMode = "one-on-one";
+    }
+    if (changes.ignoredSpeakerName?.newValue !== undefined) {
+      nextSettings.ignoredSpeakerName = String(changes.ignoredSpeakerName.newValue);
+    }
+
+    if (Object.keys(nextSettings).length > 0) {
+      settings = { ...settings, ...nextSettings };
+      panel.setSettings(settings);
+    }
+  });
 }
 
 async function loadLatestTranscript(): Promise<void> {
@@ -331,6 +395,7 @@ function analyzeQuestion(
   const payload: AnalyzeRequest = {
     question,
     history: conversationHistory,
+    promptMode: settings.promptMode,
     source,
     detectedAt: new Date().toISOString(),
   };

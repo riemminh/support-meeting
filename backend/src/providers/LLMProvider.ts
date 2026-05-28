@@ -1,6 +1,9 @@
+import type { PromptMode } from "../prompts/interviewPrompt.js";
+
 export interface InterviewAnswerInput {
   question: string;
   history?: { role: "user" | "assistant"; content: string }[];
+  promptMode: PromptMode;
 }
 
 export interface InterviewAnswerResult {

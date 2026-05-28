@@ -22,6 +22,7 @@ export class CopilotOverlay {
   private readonly manualInput: HTMLTextAreaElement;
   private readonly backendInput: HTMLInputElement;
   private readonly ignoredSpeakerInput: HTMLInputElement;
+  private readonly promptModeSelect: HTMLSelectElement;
   private readonly autoDetectInput: HTMLInputElement;
   private readonly linesInput: HTMLInputElement;
   private readonly status: HTMLDivElement;
@@ -82,6 +83,10 @@ export class CopilotOverlay {
         </div>
         <div class="tic-settings">
           <input class="tic-url" type="url" aria-label="Backend URL" />
+          <select class="tic-prompt-mode" aria-label="Prompt mode">
+            <option value="one-on-one">1-1 prompt</option>
+            <option value="multiple-speakers">Multiple speakers</option>
+          </select>
           <input class="tic-speaker" type="text" aria-label="Ignore speaker" placeholder="Ignore speaker: your Teams name" />
           <div class="tic-row" style="grid-column: 1 / -1; justify-content: space-between; align-items: center;">
             <label class="tic-checkbox">
@@ -119,6 +124,9 @@ export class CopilotOverlay {
     this.manualInput = this.root.querySelector(".tic-input") as HTMLTextAreaElement;
     this.backendInput = this.root.querySelector(".tic-url") as HTMLInputElement;
     this.linesInput = this.root.querySelector(".tic-lines") as HTMLInputElement;
+    this.promptModeSelect = this.root.querySelector(
+      ".tic-prompt-mode",
+    ) as HTMLSelectElement;
     this.ignoredSpeakerInput = this.root.querySelector(
       ".tic-speaker",
     ) as HTMLInputElement;
@@ -147,6 +155,7 @@ export class CopilotOverlay {
   setSettings(settings: CopilotSettings): void {
     this.backendInput.value = settings.backendUrl;
     this.ignoredSpeakerInput.value = settings.ignoredSpeakerName ?? "";
+    this.promptModeSelect.value = settings.promptMode;
     this.autoDetectInput.checked = settings.autoDetect;
     if (settings.overlaySize) {
       this.setSize(settings.overlaySize.width, settings.overlaySize.height);
@@ -309,6 +318,15 @@ export class CopilotOverlay {
     this.ignoredSpeakerInput.addEventListener("change", () => {
       this.handlers.onSettingsChange({
         ignoredSpeakerName: this.ignoredSpeakerInput.value.trim(),
+      });
+    });
+
+    this.promptModeSelect.addEventListener("change", () => {
+      this.handlers.onSettingsChange({
+        promptMode:
+          this.promptModeSelect.value === "multiple-speakers"
+            ? "multiple-speakers"
+            : "one-on-one",
       });
     });
 

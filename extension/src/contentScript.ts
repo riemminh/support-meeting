@@ -18,6 +18,7 @@ const SCAN_DEBOUNCE_MS = 600;
 const DEFAULT_SETTINGS: CopilotSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
+  promptMode: "one-on-one",
   ignoredSpeakerName: "",
   overlayPosition: undefined,
   overlaySize: undefined,
@@ -102,6 +103,12 @@ function installSettingsListener(): void {
     }
     if (changes.autoDetect?.newValue !== undefined) {
       nextSettings.autoDetect = Boolean(changes.autoDetect.newValue);
+    }
+    if (changes.promptMode?.newValue === "multiple-speakers") {
+      nextSettings.promptMode = "multiple-speakers";
+    }
+    if (changes.promptMode?.newValue === "one-on-one") {
+      nextSettings.promptMode = "one-on-one";
     }
     if (changes.ignoredSpeakerName?.newValue !== undefined) {
       nextSettings.ignoredSpeakerName = String(changes.ignoredSpeakerName.newValue);
@@ -763,6 +770,7 @@ function analyzeQuestion(
   const payload: AnalyzeRequest = {
     question: normalizedQuestion,
     history: conversationHistory,
+    promptMode: settings.promptMode,
     source,
     pageUrl: location.href,
     detectedAt: new Date().toISOString(),

@@ -3,9 +3,12 @@ export interface ChatMessage {
   content: string;
 }
 
+export type PromptMode = "one-on-one" | "multiple-speakers";
+
 export interface AnalyzeRequest {
   question: string;
   history?: ChatMessage[];
+  promptMode: PromptMode;
   source: "auto-detected" | "manual" | "selection";
   pageUrl?: string;
   detectedAt: string;
@@ -38,6 +41,7 @@ export type AnalyzeResult = AnalyzeResponse | AnalyzeErrorResponse;
 export interface CopilotSettings {
   backendUrl: string;
   autoDetect: boolean;
+  promptMode: PromptMode;
   ignoredSpeakerName?: string;
   overlayPosition?: {
     left: number;

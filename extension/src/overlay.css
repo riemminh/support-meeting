@@ -294,7 +294,8 @@
 }
 
 .tic-url,
-.tic-speaker {
+.tic-speaker,
+.tic-prompt-mode {
   width: 100%;
   min-width: 0;
   border: 1px solid rgba(32, 33, 36, 0.18);
@@ -302,6 +303,12 @@
   padding: 8px 9px;
   font: inherit;
   font-size: 12px;
+}
+
+.tic-prompt-mode {
+  width: auto;
+  min-width: 142px;
+  background: #ffffff;
 }
 
 .tic-lines {

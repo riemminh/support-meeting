@@ -3,10 +3,12 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import { AnthropicProvider } from "./providers/AnthropicProvider.js";
 import type { LLMProvider } from "./providers/LLMProvider.js";
+import { isPromptMode, type PromptMode } from "./prompts/interviewPrompt.js";
 
 interface AnalyzeRequestBody {
   question?: unknown;
   history?: unknown;
+  promptMode?: unknown;
   source?: unknown;
   pageUrl?: unknown;
   detectedAt?: unknown;
@@ -66,6 +68,7 @@ app.post(
       const result = await provider.generateInterviewAnswer({
         question: validation.question,
         history: validation.history,
+        promptMode: validation.promptMode,
       });
       response.json(result);
     } catch (error) {
@@ -106,6 +109,7 @@ app.post(
       for await (const text of provider.streamInterviewAnswer({
         question: validation.question,
         history: validation.history,
+        promptMode: validation.promptMode,
       })) {
         response.write(`${JSON.stringify({ type: "delta", text })}\n`);
       }
@@ -201,12 +205,21 @@ function maskSecret(value?: string): string | undefined {
 function validateAnalyzeRequest(
   body: AnalyzeRequestBody,
 ):
-  | { ok: true; question: string; history?: { role: "user" | "assistant"; content: string }[] }
+  | {
+      ok: true;
+      question: string;
+      history?: { role: "user" | "assistant"; content: string }[];
+      promptMode: PromptMode;
+    }
   | {
       ok: false;
       error: string;
     } {
   const question = typeof body.question === "string" ? body.question.trim() : "";
+  if (body.promptMode !== undefined && !isPromptMode(body.promptMode)) {
+    return { ok: false, error: "Invalid prompt mode." };
+  }
+  const promptMode: PromptMode = body.promptMode ?? "one-on-one";
 
   if (!question) {
     return { ok: false, error: "Request must include one question." };
@@ -219,7 +232,7 @@ function validateAnalyzeRequest(
     };
   }
 
-  if (looksLikeBulkTranscript(question)) {
+  if (looksLikeBulkTranscript(question, promptMode)) {
     return {
       ok: false,
       error:
@@ -251,12 +264,16 @@ function validateAnalyzeRequest(
     }
   }
 
-  return { ok: true, question, history };
+  return { ok: true, question, history, promptMode };
 }
 
-function looksLikeBulkTranscript(question: string): boolean {
+function looksLikeBulkTranscript(question: string, promptMode: PromptMode): boolean {
   const speakerLabels = question.match(/\b[A-Z][A-Za-z .'-]{1,32}:\s/g) ?? [];
   const sentenceBreaks = question.match(/[.!?]\s+/g) ?? [];
+  if (promptMode === "multiple-speakers") {
+    return speakerLabels.length >= 8 || sentenceBreaks.length >= 12;
+  }
+
   return speakerLabels.length >= 3 || sentenceBreaks.length >= 8;
 }
 

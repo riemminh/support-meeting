@@ -35,7 +35,8 @@ export class MeetingOverlay {
   private readonly selectedLinesCount: HTMLSpanElement;
   private readonly header: HTMLDivElement;
   private readonly resizeHandle: HTMLDivElement;
-  private currentContextLines: string[] = [];
+  /** Persistent transcript lines — only updated by real transcript data, never by question text */
+  private transcriptLines: string[] = [];
   private minimized = false;
   private dragState:
     | {
@@ -230,13 +231,28 @@ export class MeetingOverlay {
     if (!this.manualInput.value.trim()) {
       this.manualInput.value = question;
     }
-    this.setStatus("Detected interviewer question. Click Analyze transcript to ask Claude.");
+    this.setStatus("Detected interviewer question. Click Ask AI to ask Claude.");
+  }
+
+  /**
+   * Load real transcript lines into the left panel.
+   * Called when user picks transcript ("Use selected") or transcript is auto-detected.
+   */
+  updateTranscriptLines(text: string): void {
+    const lines = text
+      .split(/\r?\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    this.transcriptLines = lines.length > 0 ? lines : text.trim() ? [text.trim()] : [];
+    this.renderContextLines();
   }
 
   setDraft(input: string, status: string): void {
     this.clearError();
     this.manualInput.value = input;
     this.setQuestion(input);
+    // setDraft carries real transcript data — update the transcript panel
+    this.updateTranscriptLines(input);
     this.setStatus(status);
   }
 
@@ -555,7 +571,7 @@ export class MeetingOverlay {
   }
 
   private setQuestion(question: string): void {
-    this.setContext(question);
+    // Only updates the question card — does NOT touch transcript panel
     this.questionBox.hidden = false;
     const questionSlot = this.questionBox.querySelector('[data-slot="question"]');
     if (questionSlot) {
@@ -564,25 +580,16 @@ export class MeetingOverlay {
     this.clearTranslation("question");
   }
 
-  private setContext(text: string): void {
-    const lines = text
-      .split(/\r?\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-    this.currentContextLines = lines.length > 0 ? lines : text.trim() ? [text.trim()] : [];
-    this.renderContextLines();
-  }
-
   private renderContextLines(): void {
     const filter = this.contextSearchInput.value.trim().toLocaleLowerCase();
-    const rows = this.currentContextLines
+    const rows = this.transcriptLines
       .map((text, index) => ({ text, index }))
       .filter((row) => !filter || row.text.toLocaleLowerCase().includes(filter));
 
     this.contextBox.replaceChildren();
-    this.selectedLinesCount.textContent = String(this.currentContextLines.length);
+    this.selectedLinesCount.textContent = String(this.transcriptLines.length);
 
-    if (this.currentContextLines.length === 0) {
+    if (this.transcriptLines.length === 0) {
       const placeholder = document.createElement("div");
       placeholder.className = "tic-context-empty";
       placeholder.textContent = "Use selected text or paste transcript to load context.";

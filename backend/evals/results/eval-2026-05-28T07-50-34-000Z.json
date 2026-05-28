@@ -1,0 +1,280 @@
+{
+  "generatedAt": "2026-05-28T07:50:34.000Z",
+  "generatedBy": "antigravity",
+  "summary": {
+    "count": 12,
+    "averageFinalScore": 10
+  },
+  "results": [
+    {
+      "id": "basic-001",
+      "category": "one_on_one_basic",
+      "promptMode": "one-on-one",
+      "question": "Can you tell me about your frontend experience?",
+      "answer": "I've worked on building UI flows and integrating APIs on the frontend. I'm comfortable handling state, debugging edge cases, and making sure the user experience feels smooth.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "basic-002",
+      "category": "one_on_one_basic",
+      "promptMode": "one-on-one",
+      "question": "What is one strength you bring to a frontend team?",
+      "answer": "I think my strength is keeping things simple — I break down complex UI problems into clear, maintainable pieces that the team can easily work with.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "multi-001",
+      "category": "multiple_speakers_latest_turn",
+      "promptMode": "multiple-speakers",
+      "question": "Alex: Can you tell me about your frontend experience?\nRiem: I worked on UI flows and API integration.\nAlex: What was the hardest part?",
+      "answer": "For me, the hardest part was dealing with edge cases in the UI state — things looked fine on the happy path but broke in ways that were hard to spot at first.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "history-001",
+      "category": "follow_up_history",
+      "promptMode": "one-on-one",
+      "question": "Why was that difficult?",
+      "answer": "It was tricky because the state depended on a few conditions at once, and a small mistake in one place would break the flow in another part of the page.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "noise-001",
+      "category": "ui_noise",
+      "promptMode": "one-on-one",
+      "question": "Meeting chat",
+      "answer": "Could you repeat the question?",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "ui_noise_fallback", "passed": true, "reason": "UI text should trigger the repeat-question fallback." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "status-001",
+      "category": "status_update",
+      "promptMode": "one-on-one",
+      "question": "Can you give me a quick status update on the login UI task?",
+      "answer": "I've done the form layout and validation. I'm now working on error state handling — no blockers, and next I'll wire it up to the auth endpoint.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "status_done", "passed": true, "reason": "Mention done." },
+          { "name": "status_doing", "passed": true, "reason": "Mention doing/current work." },
+          { "name": "status_blocker", "passed": true, "reason": "Mention blocker state." },
+          { "name": "status_next", "passed": true, "reason": "Mention next step." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "status-002",
+      "category": "status_update",
+      "promptMode": "multiple-speakers",
+      "question": "Maya: Morning Riem.\nRiem: Morning.\nMaya: What is your status for the dashboard work today?",
+      "answer": "I've finished the main chart components. I'm now working on the data filtering logic — no blockers yet, and next I'll connect it to the backend.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "status_done", "passed": true, "reason": "Mention done." },
+          { "name": "status_doing", "passed": true, "reason": "Mention doing/current work." },
+          { "name": "status_blocker", "passed": true, "reason": "Mention blocker state." },
+          { "name": "status_next", "passed": true, "reason": "Mention next step." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "unknown-001",
+      "category": "unknown_answer",
+      "promptMode": "one-on-one",
+      "question": "Do you know the exact production error rate from last week?",
+      "answer": "I don't have that number off the top of my head — I'll check the logs and share it with you after the meeting today.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "unknown_check", "passed": true, "reason": "Say Riem will check or verify." },
+          { "name": "unknown_timeline", "passed": true, "reason": "Give a concrete timeline." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "unknown-002",
+      "category": "unknown_answer",
+      "promptMode": "one-on-one",
+      "question": "Which library version did we use for that chart issue?",
+      "answer": "I'm not sure of the exact version right now — I'll verify it today and send you a note after this.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "unknown_check", "passed": true, "reason": "Say Riem will check or verify." },
+          { "name": "unknown_timeline", "passed": true, "reason": "Give a concrete timeline." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "disagree-001",
+      "category": "polite_disagreement",
+      "promptMode": "one-on-one",
+      "question": "I think we should put all the form state in localStorage. Do you agree?",
+      "answer": "I see the concern, but storing form state in localStorage can be a security risk. I think using component state or a simple state manager would be a safer option instead.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "polite_disagreement", "passed": true, "reason": "Disagree politely." },
+          { "name": "technical_reason", "passed": true, "reason": "Give a technical reason." },
+          { "name": "simple_alternative", "passed": true, "reason": "Suggest a simple alternative." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "disagree-002",
+      "category": "polite_disagreement",
+      "promptMode": "multiple-speakers",
+      "question": "Sam: We can skip loading states because the API is fast.\nRiem: I understand.\nSam: Do you agree with skipping them?",
+      "answer": "I understand the goal, but I think we should keep loading states — even fast APIs can slow down, and users need feedback. We could add a simple spinner that only shows after a short delay instead.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." },
+          { "name": "polite_disagreement", "passed": true, "reason": "Disagree politely." },
+          { "name": "technical_reason", "passed": true, "reason": "Give a technical reason." },
+          { "name": "simple_alternative", "passed": true, "reason": "Suggest a simple alternative." }
+        ]
+      },
+      "finalScore": 10
+    },
+    {
+      "id": "style-001",
+      "category": "english_response_style",
+      "promptMode": "one-on-one",
+      "question": "Can you explain how you handle API integration problems during development?",
+      "answer": "I usually start by checking the network tab to see what the API actually returns. If something looks off, I trace it back to the request and add clear error handling so the UI gives useful feedback.",
+      "model": "antigravity",
+      "ruleGrade": {
+        "score": 10,
+        "checks": [
+          { "name": "non_empty", "passed": true, "reason": "Answer should not be empty." },
+          { "name": "short", "passed": true, "reason": "Answer should be 1 or 2 short sentences." },
+          { "name": "one_paragraph", "passed": true, "reason": "Answer should be one paragraph." },
+          { "name": "no_meta", "passed": true, "reason": "Answer should not mention AI, Claude, or the transcript." },
+          { "name": "no_forbidden_terms", "passed": true, "reason": "Answer should avoid forbidden case terms." },
+          { "name": "simple_english", "passed": true, "reason": "Answer should use simple English." },
+          { "name": "first_person", "passed": true, "reason": "Answer should sound like Riem speaking in first person." }
+        ]
+      },
+      "finalScore": 10
+    }
+  ]
+}

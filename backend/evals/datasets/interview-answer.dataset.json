@@ -1,0 +1,186 @@
+[
+  {
+    "id": "basic-001",
+    "category": "one_on_one_basic",
+    "promptMode": "one-on-one",
+    "question": "Can you tell me about your frontend experience?",
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "answers as Riem in first person",
+      "uses simple English",
+      "does not invent a specific company, project name, or metric",
+      "keeps the answer short and useful for an interview"
+    ],
+    "forbidden": ["As an AI", "language model", "transcript", "Claude"]
+  },
+  {
+    "id": "basic-002",
+    "category": "one_on_one_basic",
+    "promptMode": "one-on-one",
+    "question": "What is one strength you bring to a frontend team?",
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "answers directly",
+      "uses first person",
+      "keeps a professional but natural tone",
+      "avoids complex vocabulary"
+    ],
+    "forbidden": ["As an AI", "language model", "transcript"]
+  },
+  {
+    "id": "multi-001",
+    "category": "multiple_speakers_latest_turn",
+    "promptMode": "multiple-speakers",
+    "question": "Alex: Can you tell me about your frontend experience?\nRiem: I worked on UI flows and API integration.\nAlex: What was the hardest part?",
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "answers only Alex's newest question",
+      "does not answer the first question again",
+      "uses the excerpt only as context",
+      "keeps the response short"
+    ],
+    "forbidden": ["first question", "transcript", "speaker label"]
+  },
+  {
+    "id": "history-001",
+    "category": "follow_up_history",
+    "promptMode": "one-on-one",
+    "question": "Why was that difficult?",
+    "history": [
+      {
+        "role": "user",
+        "content": "Tell me about a challenging frontend bug you handled."
+      },
+      {
+        "role": "assistant",
+        "content": "I worked on a tricky UI state issue where the page looked correct at first, but edge cases broke the flow."
+      }
+    ],
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "uses history to understand the follow-up",
+      "does not repeat the old answer",
+      "explains the difficulty in simple English",
+      "keeps the answer concise"
+    ],
+    "forbidden": ["Tell me about", "old question", "previous question"]
+  },
+  {
+    "id": "noise-001",
+    "category": "ui_noise",
+    "promptMode": "one-on-one",
+    "question": "Meeting chat",
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "recognizes Teams UI text",
+      "asks for the question to be repeated exactly or nearly exactly"
+    ],
+    "requiredSignals": ["Could you repeat the question?"],
+    "forbidden": ["I think", "frontend", "project"]
+  },
+  {
+    "id": "status-001",
+    "category": "status_update",
+    "promptMode": "one-on-one",
+    "question": "Can you give me a quick status update on the login UI task?",
+    "meetingStyle": "status",
+    "expectedBehavior": [
+      "answers briefly",
+      "mentions done, doing, blocker, or next step",
+      "sounds useful for standup",
+      "does not invent exact metrics or company-specific details"
+    ],
+    "requiredSignals": ["done", "doing", "blocker", "next"],
+    "forbidden": ["As an AI", "transcript"]
+  },
+  {
+    "id": "status-002",
+    "category": "status_update",
+    "promptMode": "multiple-speakers",
+    "question": "Maya: Morning Riem.\nRiem: Morning.\nMaya: What is your status for the dashboard work today?",
+    "meetingStyle": "status",
+    "expectedBehavior": [
+      "answers only the latest status question",
+      "mentions current progress and next step",
+      "keeps the response standup-friendly",
+      "does not over-explain"
+    ],
+    "requiredSignals": ["done", "doing", "blocker", "next"],
+    "forbidden": ["Morning", "transcript"]
+  },
+  {
+    "id": "unknown-001",
+    "category": "unknown_answer",
+    "promptMode": "one-on-one",
+    "question": "Do you know the exact production error rate from last week?",
+    "meetingStyle": "unknown",
+    "expectedBehavior": [
+      "does not invent a number",
+      "says Riem will check",
+      "gives a concrete timeline",
+      "stays professional and short"
+    ],
+    "requiredSignals": ["check", "today", "after", "by"],
+    "forbidden": ["0.1%", "99.9%", "exactly", "As an AI"]
+  },
+  {
+    "id": "unknown-002",
+    "category": "unknown_answer",
+    "promptMode": "one-on-one",
+    "question": "Which library version did we use for that chart issue?",
+    "meetingStyle": "unknown",
+    "expectedBehavior": [
+      "does not guess a library version",
+      "says Riem will verify it",
+      "provides a clear follow-up timeline",
+      "uses simple professional English"
+    ],
+    "requiredSignals": ["check", "verify", "today", "after", "by"],
+    "forbidden": ["version 3", "version 4", "React", "Chart.js"]
+  },
+  {
+    "id": "disagree-001",
+    "category": "polite_disagreement",
+    "promptMode": "one-on-one",
+    "question": "I think we should put all the form state in localStorage. Do you agree?",
+    "meetingStyle": "disagree",
+    "expectedBehavior": [
+      "disagrees politely if needed",
+      "gives a technical reason",
+      "suggests a simple alternative",
+      "stays professional and concise"
+    ],
+    "requiredSignals": ["I see", "concern", "because", "alternative", "instead"],
+    "forbidden": ["bad idea", "wrong", "stupid"]
+  },
+  {
+    "id": "disagree-002",
+    "category": "polite_disagreement",
+    "promptMode": "multiple-speakers",
+    "question": "Sam: We can skip loading states because the API is fast.\nRiem: I understand.\nSam: Do you agree with skipping them?",
+    "meetingStyle": "disagree",
+    "expectedBehavior": [
+      "answers the newest disagreement question",
+      "disagrees politely",
+      "explains a user experience or technical reason",
+      "offers a simple alternative"
+    ],
+    "requiredSignals": ["agree", "concern", "because", "instead", "alternative"],
+    "forbidden": ["API is fast enough", "transcript"]
+  },
+  {
+    "id": "style-001",
+    "category": "english_response_style",
+    "promptMode": "one-on-one",
+    "question": "Can you explain how you handle API integration problems during development?",
+    "meetingStyle": "general",
+    "expectedBehavior": [
+      "clear and professional",
+      "not too long",
+      "no complex vocabulary",
+      "useful for technical discussion",
+      "sounds natural when read aloud"
+    ],
+    "forbidden": ["aforementioned", "utilize", "comprehensive", "paradigm", "synergy"]
+  }
+]

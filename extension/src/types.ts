@@ -9,7 +9,6 @@ export interface AnalyzeRequest {
   question: string;
   history?: ChatMessage[];
   promptMode: PromptMode;
-  source: "auto-detected" | "manual" | "selection";
   pageUrl?: string;
   detectedAt: string;
 }

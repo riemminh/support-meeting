@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Teams Interview Copilot",
+  "name": "Teams Meeting Copilot",
   "version": "0.1.0",
-  "description": "Read Microsoft Teams RTT transcript and suggest interview answers.",
+  "description": "Read Microsoft Teams RTT transcript and suggest meeting answers.",
   "action": {
-    "default_title": "Open Teams Interview Copilot"
+    "default_title": "Open Teams Meeting Copilot"
   },
   "permissions": ["storage", "activeTab"],
   "host_permissions": [

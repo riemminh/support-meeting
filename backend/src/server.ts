@@ -9,7 +9,6 @@ interface AnalyzeRequestBody {
   question?: unknown;
   history?: unknown;
   promptMode?: unknown;
-  source?: unknown;
   pageUrl?: unknown;
   detectedAt?: unknown;
 }

@@ -1,7 +1,7 @@
 import type { AnalyzeResponse, CopilotSettings } from "./types";
 
 export interface OverlayHandlers {
-  onAnalyze(input: string, source: "manual" | "selection"): void;
+  onAnalyze(input: string): void;
   onPickTranscript(): void;
   onSettingsChange(settings: Partial<CopilotSettings>): void;
   onClearHistory?(): void;
@@ -57,16 +57,15 @@ export class CopilotOverlay {
     this.root = document.createElement("div");
     this.root.className = "tic-overlay";
     this.root.setAttribute("role", "complementary");
-    this.root.setAttribute("aria-label", "Teams Interview Copilot");
+    this.root.setAttribute("aria-label", "Teams Meeting Copilot");
 
     this.root.innerHTML = `
       <div class="tic-header">
         <div>
-          <div class="tic-title">Teams Interview Copilot</div>
-          <div class="tic-subtitle">Transcript to interview answer</div>
+          <div class="tic-title">Teams Meeting Copilot</div>
+          <div class="tic-subtitle">Transcript to meeting answer</div>
         </div>
         <div class="tic-header-actions">
-          <button class="tic-icon-button" data-action="selection" title="Load selected transcript" aria-label="Load selected transcript">S</button>
           <button class="tic-icon-button" data-action="detach" title="${this.options.detachedPanel ? "Show in-page overlay" : "Open separate window"}" aria-label="${this.options.detachedPanel ? "Show in-page overlay" : "Open separate window"}">${this.options.detachedPanel ? "P" : "W"}</button>
           <button class="tic-icon-button" data-action="minimize" title="Minimize" aria-label="Minimize">_</button>
         </div>
@@ -440,7 +439,7 @@ export class CopilotOverlay {
 
   private submitManual(): void {
     const question = this.manualInput.value.trim();
-    this.handlers.onAnalyze(question, "manual");
+    this.handlers.onAnalyze(question);
   }
 
   private submitSelection(): void {

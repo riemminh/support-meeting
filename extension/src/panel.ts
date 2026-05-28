@@ -39,11 +39,10 @@ class PanelView {
       <div class="tic-overlay" data-panel="true">
         <div class="tic-header">
           <div>
-            <div class="tic-title">Teams Interview Copilot</div>
+            <div class="tic-title">Teams Meeting Copilot</div>
             <div class="tic-subtitle">Separate answer window</div>
           </div>
           <div class="tic-header-actions">
-            <button class="tic-icon-button" data-action="selection" title="Load latest from Teams" aria-label="Load latest from Teams">S</button>
             <button class="tic-icon-button" data-action="restore" title="Show in-page overlay" aria-label="Show in-page overlay">P</button>
           </div>
         </div>
@@ -178,7 +177,7 @@ class PanelView {
       }
 
       if (action === "manual") {
-        analyzeQuestion(this.manualInput.value, "manual");
+        analyzeQuestion(this.manualInput.value);
       }
 
       if (action === "selection") {
@@ -382,10 +381,7 @@ async function loadLatestTranscript(): Promise<void> {
   );
 }
 
-function analyzeQuestion(
-  input: string,
-  source: AnalyzeRequest["source"],
-): void {
+function analyzeQuestion(input: string): void {
   const question = input.trim();
   if (!question) {
     panel.setError("Paste a question or use selection from the Teams tab first.");
@@ -396,7 +392,6 @@ function analyzeQuestion(
     question,
     history: conversationHistory,
     promptMode: settings.promptMode,
-    source,
     detectedAt: new Date().toISOString(),
   };
 

@@ -54,8 +54,8 @@ interface TranscriptEntry {
 }
 
 const overlay = new CopilotOverlay({
-  onAnalyze: (input, source) => {
-    void analyzeTranscriptOrQuestion(input, source);
+  onAnalyze: (input) => {
+    void analyzeTranscriptOrQuestion(input);
   },
   onPickTranscript: () => {
     pickTranscriptIntoOverlay();
@@ -755,10 +755,7 @@ function fingerprint(question: string): string {
     .trim();
 }
 
-function analyzeQuestion(
-  question: string,
-  source: AnalyzeRequest["source"],
-): void {
+function analyzeQuestion(question: string): void {
   const normalizedQuestion = clampQuestion(question);
   if (!normalizedQuestion) {
     return;
@@ -771,7 +768,6 @@ function analyzeQuestion(
     question: normalizedQuestion,
     history: conversationHistory,
     promptMode: settings.promptMode,
-    source,
     pageUrl: location.href,
     detectedAt: new Date().toISOString(),
   };
@@ -779,10 +775,7 @@ function analyzeQuestion(
   streamAnalyzeQuestion(payload);
 }
 
-async function analyzeTranscriptOrQuestion(
-  input: string,
-  source: AnalyzeRequest["source"],
-): Promise<void> {
+async function analyzeTranscriptOrQuestion(input: string): Promise<void> {
   const candidate = input.trim() || getLatestVisibleTranscriptText() || "";
   const question = extractCurrentInterviewTurn(candidate) ?? "";
 
@@ -793,7 +786,7 @@ async function analyzeTranscriptOrQuestion(
     return;
   }
 
-  analyzeQuestion(question, source);
+  analyzeQuestion(question);
 }
 
 function readLatestTranscriptForPanel(linesToGrab = 1): LatestTranscriptReply {

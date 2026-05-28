@@ -1,4 +1,4 @@
-# Teams Meeting Copilot
+# Teams Meeting
 
 Chrome Extension Manifest V3 plus a local TypeScript backend for Microsoft Teams Web meeting help.
 
@@ -9,7 +9,7 @@ It does not capture audio, run speech-to-text, use Microsoft Graph, use the Team
 ## Project Layout
 
 ```text
-teams-interview-copilot/
+project-root/
   extension/
     package.json
     tsconfig.json
@@ -84,7 +84,7 @@ Load the extension in Chrome:
 1. Open `chrome://extensions`.
 2. Enable Developer mode.
 3. Click Load unpacked.
-4. Select `teams-interview-copilot/extension/dist`.
+4. Select `extension/dist`.
 5. Open Microsoft Teams Web at `https://teams.microsoft.com`, `https://teams.live.com`, or `https://teams.cloud.microsoft`.
 
 ## Usage

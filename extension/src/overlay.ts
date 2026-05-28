@@ -1,9 +1,9 @@
-import type { AnalyzeResponse, CopilotSettings } from "./types";
+import type { AnalyzeResponse, MeetingSettings } from "./types";
 
 export interface OverlayHandlers {
   onAnalyze(input: string): void;
   onPickTranscript(): void;
-  onSettingsChange(settings: Partial<CopilotSettings>): void;
+  onSettingsChange(settings: Partial<MeetingSettings>): void;
   onClearHistory?(): void;
   onDetachPanel?(): void;
   onTranslateText?(text: string): Promise<string>;
@@ -13,7 +13,7 @@ export interface OverlayOptions {
   detachedPanel?: boolean;
 }
 
-export class CopilotOverlay {
+export class MeetingOverlay {
   private static readonly MIN_WIDTH = 360;
   private static readonly MIN_HEIGHT = 260;
   private static readonly VIEWPORT_MARGIN = 8;
@@ -57,12 +57,12 @@ export class CopilotOverlay {
     this.root = document.createElement("div");
     this.root.className = "tic-overlay";
     this.root.setAttribute("role", "complementary");
-    this.root.setAttribute("aria-label", "Teams Meeting Copilot");
+    this.root.setAttribute("aria-label", "Teams Meeting");
 
     this.root.innerHTML = `
       <div class="tic-header">
         <div>
-          <div class="tic-title">Teams Meeting Copilot</div>
+          <div class="tic-title">Teams Meeting</div>
           <div class="tic-subtitle">Transcript to meeting answer</div>
         </div>
         <div class="tic-header-actions">
@@ -151,7 +151,7 @@ export class CopilotOverlay {
     }
   }
 
-  setSettings(settings: CopilotSettings): void {
+  setSettings(settings: MeetingSettings): void {
     this.backendInput.value = settings.backendUrl;
     this.ignoredSpeakerInput.value = settings.ignoredSpeakerName ?? "";
     this.promptModeSelect.value = settings.promptMode;
@@ -523,17 +523,17 @@ export class CopilotOverlay {
   private setPosition(left: number, top: number): void {
     const rect = this.root.getBoundingClientRect();
     const nextLeft = Math.min(
-      Math.max(left, CopilotOverlay.VIEWPORT_MARGIN),
+      Math.max(left, MeetingOverlay.VIEWPORT_MARGIN),
       Math.max(
-        window.innerWidth - rect.width - CopilotOverlay.VIEWPORT_MARGIN,
-        CopilotOverlay.VIEWPORT_MARGIN,
+        window.innerWidth - rect.width - MeetingOverlay.VIEWPORT_MARGIN,
+        MeetingOverlay.VIEWPORT_MARGIN,
       ),
     );
     const nextTop = Math.min(
-      Math.max(top, CopilotOverlay.VIEWPORT_MARGIN),
+      Math.max(top, MeetingOverlay.VIEWPORT_MARGIN),
       Math.max(
-        window.innerHeight - rect.height - CopilotOverlay.VIEWPORT_MARGIN,
-        CopilotOverlay.VIEWPORT_MARGIN,
+        window.innerHeight - rect.height - MeetingOverlay.VIEWPORT_MARGIN,
+        MeetingOverlay.VIEWPORT_MARGIN,
       ),
     );
 
@@ -544,22 +544,22 @@ export class CopilotOverlay {
 
   private setSize(width: number, height: number): void {
     const rect = this.root.getBoundingClientRect();
-    const left = rect.left || CopilotOverlay.VIEWPORT_MARGIN;
-    const top = rect.top || CopilotOverlay.VIEWPORT_MARGIN;
+    const left = rect.left || MeetingOverlay.VIEWPORT_MARGIN;
+    const top = rect.top || MeetingOverlay.VIEWPORT_MARGIN;
     const maxWidth = Math.max(
-      CopilotOverlay.MIN_WIDTH,
-      window.innerWidth - left - CopilotOverlay.VIEWPORT_MARGIN,
+      MeetingOverlay.MIN_WIDTH,
+      window.innerWidth - left - MeetingOverlay.VIEWPORT_MARGIN,
     );
     const maxHeight = Math.max(
-      CopilotOverlay.MIN_HEIGHT,
-      window.innerHeight - top - CopilotOverlay.VIEWPORT_MARGIN,
+      MeetingOverlay.MIN_HEIGHT,
+      window.innerHeight - top - MeetingOverlay.VIEWPORT_MARGIN,
     );
     const nextWidth = Math.min(
-      Math.max(width, CopilotOverlay.MIN_WIDTH),
+      Math.max(width, MeetingOverlay.MIN_WIDTH),
       maxWidth,
     );
     const nextHeight = Math.min(
-      Math.max(height, CopilotOverlay.MIN_HEIGHT),
+      Math.max(height, MeetingOverlay.MIN_HEIGHT),
       maxHeight,
     );
 

@@ -125,7 +125,7 @@ app.post(
 );
 
 app.listen(PORT, HOST, () => {
-  console.log(`Teams Meeting Copilot backend listening on http://${HOST}:${PORT}`);
+  console.log(`Teams Meeting backend listening on http://${HOST}:${PORT}`);
 });
 
 function requireEnvInt(name: string): number {

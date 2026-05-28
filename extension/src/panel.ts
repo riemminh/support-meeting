@@ -4,11 +4,11 @@ import type {
   BackgroundTranslateReply,
   BackgroundMessage,
   ChatMessage,
-  CopilotSettings,
+  MeetingSettings,
   LatestTranscriptReply,
 } from "./types";
 
-const DEFAULT_SETTINGS: CopilotSettings = {
+const DEFAULT_SETTINGS: MeetingSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
   promptMode: "one-on-one",
@@ -18,7 +18,7 @@ const DEFAULT_SETTINGS: CopilotSettings = {
 };
 
 let conversationHistory: ChatMessage[] = [];
-let settings: CopilotSettings = DEFAULT_SETTINGS;
+let settings: MeetingSettings = DEFAULT_SETTINGS;
 
 class PanelView {
   private readonly manualInput: HTMLTextAreaElement;
@@ -39,7 +39,7 @@ class PanelView {
       <div class="tic-overlay" data-panel="true">
         <div class="tic-header">
           <div>
-            <div class="tic-title">Teams Meeting Copilot</div>
+            <div class="tic-title">Teams Meeting</div>
             <div class="tic-subtitle">Separate answer window</div>
           </div>
           <div class="tic-header-actions">
@@ -113,7 +113,7 @@ class PanelView {
     this.bindEvents();
   }
 
-  setSettings(settings: CopilotSettings): void {
+  setSettings(settings: MeetingSettings): void {
     this.backendInput.value = settings.backendUrl;
     this.ignoredSpeakerInput.value = settings.ignoredSpeakerName ?? "";
     this.promptModeSelect.value = settings.promptMode;
@@ -318,7 +318,7 @@ const panel = new PanelView();
 void initialize();
 
 async function initialize(): Promise<void> {
-  settings = await sendMessage<CopilotSettings>({ type: "GET_SETTINGS" }).catch(
+  settings = await sendMessage<MeetingSettings>({ type: "GET_SETTINGS" }).catch(
     () => DEFAULT_SETTINGS,
   );
   panel.setSettings(settings);
@@ -332,7 +332,7 @@ function installSettingsListener(): void {
       return;
     }
 
-    const nextSettings: Partial<CopilotSettings> = {};
+    const nextSettings: Partial<MeetingSettings> = {};
     if (changes.backendUrl?.newValue !== undefined) {
       nextSettings.backendUrl = String(changes.backendUrl.newValue);
     }

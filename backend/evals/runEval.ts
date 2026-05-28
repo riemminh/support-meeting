@@ -130,7 +130,7 @@ function buildAgentPrompt(testCase: EvalTestCase): string {
   }));
 
   return [
-    "Simulate the production Teams Meeting Copilot prompt.",
+    "Simulate the production Teams Meeting prompt.",
     "Return only the final assistant answer, not JSON or explanation.",
     "",
     `Case: ${testCase.id}`,

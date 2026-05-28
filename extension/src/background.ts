@@ -3,14 +3,14 @@ import type {
   BackgroundAnalyzeReply,
   BackgroundTranslateReply,
   BackgroundMessage,
-  CopilotSettings,
+  MeetingSettings,
   LatestTranscriptReply,
   TranslateResponse,
   AnalyzeStreamMessage,
   AnalyzeStreamStartMessage,
 } from "./types";
 
-const DEFAULT_SETTINGS: CopilotSettings = {
+const DEFAULT_SETTINGS: MeetingSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
   promptMode: "one-on-one",
@@ -277,7 +277,7 @@ function getErrorMessage(data: unknown): string | undefined {
   return undefined;
 }
 
-function getSettings(): Promise<CopilotSettings> {
+function getSettings(): Promise<MeetingSettings> {
   return new Promise((resolve) => {
     chrome.storage.sync.get(DEFAULT_SETTINGS, (settings) => {
       resolve({ ...DEFAULT_SETTINGS, ...settings });

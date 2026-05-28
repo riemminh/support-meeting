@@ -37,7 +37,7 @@ export interface AnalyzeErrorResponse {
 
 export type AnalyzeResult = AnalyzeResponse | AnalyzeErrorResponse;
 
-export interface CopilotSettings {
+export interface MeetingSettings {
   backendUrl: string;
   autoDetect: boolean;
   promptMode: PromptMode;
@@ -82,7 +82,7 @@ export type BackgroundMessage =
     }
   | {
       type: "SAVE_SETTINGS";
-      payload: Partial<CopilotSettings>;
+      payload: Partial<MeetingSettings>;
     }
   | {
       type: "OPEN_DETACHED_PANEL";

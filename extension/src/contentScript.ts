@@ -1,11 +1,11 @@
-import { CopilotOverlay } from "./overlay";
+import { MeetingOverlay } from "./overlay";
 import type {
   AnalyzeRequest,
   AnalyzeStreamMessage,
   BackgroundAnalyzeReply,
   BackgroundTranslateReply,
   BackgroundMessage,
-  CopilotSettings,
+  MeetingSettings,
   ChatMessage,
   ContentScriptMessage,
   LatestTranscriptReply,
@@ -15,7 +15,7 @@ const MAX_QUESTION_LENGTH = 700;
 const MAX_AUTO_TURN_ENTRIES = 6;
 const DEDUPE_TTL_MS = 90_000;
 const SCAN_DEBOUNCE_MS = 600;
-const DEFAULT_SETTINGS: CopilotSettings = {
+const DEFAULT_SETTINGS: MeetingSettings = {
   backendUrl: "http://localhost:8787",
   autoDetect: true,
   promptMode: "one-on-one",
@@ -42,7 +42,7 @@ const questionLeadIns = [
   /\b(can you|could you|would you|tell me about|walk me through|describe a time|how would you|what would you|why should we|what makes you|what about|how about|i want you to|i'd like you to|please explain|please describe)\b/i,
 ];
 
-let settings: CopilotSettings = DEFAULT_SETTINGS;
+let settings: MeetingSettings = DEFAULT_SETTINGS;
 let observer: MutationObserver | undefined;
 let scanTimer: number | undefined;
 const recentlySeen = new Map<string, number>();
@@ -53,7 +53,7 @@ interface TranscriptEntry {
   text: string;
 }
 
-const overlay = new CopilotOverlay({
+const overlay = new MeetingOverlay({
   onAnalyze: (input) => {
     void analyzeTranscriptOrQuestion(input);
   },
@@ -97,7 +97,7 @@ function installSettingsListener(): void {
       return;
     }
 
-    const nextSettings: Partial<CopilotSettings> = {};
+    const nextSettings: Partial<MeetingSettings> = {};
     if (changes.backendUrl?.newValue !== undefined) {
       nextSettings.backendUrl = String(changes.backendUrl.newValue);
     }
@@ -1006,8 +1006,8 @@ function pickTranscriptIntoOverlay(selectedText?: string): void {
   );
 }
 
-async function getSettings(): Promise<CopilotSettings> {
-  return sendMessage<CopilotSettings>({ type: "GET_SETTINGS" }).catch(
+async function getSettings(): Promise<MeetingSettings> {
+  return sendMessage<MeetingSettings>({ type: "GET_SETTINGS" }).catch(
     () => DEFAULT_SETTINGS,
   );
 }

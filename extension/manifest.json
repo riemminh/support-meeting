@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Teams Meeting Copilot",
+  "name": "Teams Meeting",
   "version": "0.1.0",
   "description": "Read Microsoft Teams RTT transcript and suggest meeting answers.",
   "action": {
-    "default_title": "Open Teams Meeting Copilot"
+    "default_title": "Open Teams Meeting"
   },
   "permissions": ["storage", "activeTab"],
   "host_permissions": [

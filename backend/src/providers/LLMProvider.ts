@@ -15,9 +15,19 @@ export interface InterviewAnswerResult {
   };
 }
 
+export interface TranslateInput {
+  text: string;
+}
+
+export interface TranslateResult {
+  translation: string;
+  model: string;
+}
+
 export interface LLMProvider {
   generateInterviewAnswer(
     input: InterviewAnswerInput,
   ): Promise<InterviewAnswerResult>;
   streamInterviewAnswer(input: InterviewAnswerInput): AsyncIterable<string>;
+  translateText(input: TranslateInput): Promise<TranslateResult>;
 }

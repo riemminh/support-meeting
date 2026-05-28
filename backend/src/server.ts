@@ -124,6 +124,33 @@ app.post(
   },
 );
 
+app.post(
+  "/translate",
+  async (
+    request: Request<unknown, unknown, { text?: unknown }>,
+    response: Response,
+  ) => {
+    const text = typeof request.body.text === "string" ? request.body.text.trim() : "";
+    if (!text) {
+      response.status(400).json({ error: "Request must include a non-empty 'text' field." });
+      return;
+    }
+
+    if (text.length > 8000) {
+      response.status(400).json({ error: "Text exceeds maximum length of 8000 characters." });
+      return;
+    }
+
+    try {
+      const result = await provider.translateText({ text });
+      response.json(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to translate text.";
+      response.status(502).json({ error: message });
+    }
+  },
+);
+
 app.listen(PORT, HOST, () => {
   console.log(`Teams Meeting backend listening on http://${HOST}:${PORT}`);
 });

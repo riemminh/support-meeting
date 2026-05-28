@@ -32,64 +32,91 @@ class PanelView {
   private readonly answerBox: HTMLDivElement;
   private readonly errorBox: HTMLDivElement;
   private readonly analyzeButton: HTMLButtonElement;
+  private readonly contextSearchInput: HTMLInputElement;
+  private readonly contextBox: HTMLDivElement;
+  private readonly selectedLinesCount: HTMLSpanElement;
+  private currentContextLines: string[] = [];
 
   constructor() {
     document.body.classList.add("tic-panel-page");
     document.body.innerHTML = `
       <div class="tic-overlay" data-panel="true">
         <div class="tic-header">
-          <div>
+          <div class="tic-header-copy">
             <div class="tic-title">Teams Meeting</div>
-            <div class="tic-subtitle">Separate answer window</div>
+            <div class="tic-subtitle">Ask questions from meeting transcript</div>
           </div>
           <div class="tic-header-actions">
+            <details class="tic-settings-menu">
+              <summary>Settings</summary>
+              <div class="tic-settings">
+                <input class="tic-url" type="url" aria-label="Backend URL" />
+                <select class="tic-prompt-mode" aria-label="Prompt mode">
+                  <option value="one-on-one">1-1 prompt</option>
+                  <option value="multiple-speakers">Multiple speakers</option>
+                </select>
+                <input class="tic-speaker" type="text" aria-label="Ignore speaker" placeholder="Ignore speaker: your Teams name" />
+                <div class="tic-row tic-settings-row">
+                  <label class="tic-checkbox">
+                    <input type="checkbox" class="tic-auto-detect" />
+                    Prepare latest
+                  </label>
+                  <button class="tic-button tic-button-sm" data-action="clear-history" title="Clear conversation history">Clear History</button>
+                </div>
+              </div>
+            </details>
             <button class="tic-icon-button" data-action="restore" title="Show in-page overlay" aria-label="Show in-page overlay">P</button>
           </div>
         </div>
         <div class="tic-body">
-          <textarea class="tic-input" placeholder="Paste transcript or one interviewer question..."></textarea>
-          <div class="tic-row" style="align-items: center; gap: 8px;">
-            <button class="tic-button tic-button-primary" data-action="manual">Analyze transcript</button>
-            <button class="tic-button" data-action="selection" title="Use selected text from Teams, or latest transcript if nothing is selected">Use selection</button>
-            <label class="tic-lines-control" title="Number of latest transcript lines to grab">
-              <span>Lines</span>
-              <input class="tic-lines" type="number" min="1" max="10" value="1" aria-label="Lines to grab" />
-            </label>
-          </div>
-          <div class="tic-settings">
-            <input class="tic-url" type="url" aria-label="Backend URL" />
-            <select class="tic-prompt-mode" aria-label="Prompt mode">
-              <option value="one-on-one">1-1 prompt</option>
-              <option value="multiple-speakers">Multiple speakers</option>
-            </select>
-            <input class="tic-speaker" type="text" aria-label="Ignore speaker" placeholder="Ignore speaker: your Teams name" />
-            <div class="tic-row" style="grid-column: 1 / -1; justify-content: space-between; align-items: center;">
-              <label class="tic-checkbox">
-                <input type="checkbox" class="tic-auto-detect" />
-                Prepare latest
-              </label>
-              <button class="tic-button tic-button-sm" data-action="clear-history" title="Clear conversation history">Clear History</button>
+          <div class="tic-workspace">
+            <section class="tic-side tic-context-panel" aria-label="Transcript context">
+              <div class="tic-section-title">Transcript context</div>
+              <input class="tic-context-search" type="search" placeholder="Search transcript" aria-label="Search transcript" />
+              <div class="tic-context-list" data-slot="context"></div>
+              <div class="tic-context-footer">Selected lines: <span data-slot="selected-lines">0</span></div>
+            </section>
+
+            <section class="tic-side tic-qa-panel" aria-label="Ask and answer">
+              <div class="tic-ask-section">
+                <div class="tic-section-title">Ask a question</div>
+                <textarea class="tic-input" placeholder="Ask or paste selected transcript..."></textarea>
+                <div class="tic-row tic-action-row">
+                  <button class="tic-button tic-button-primary" data-action="manual">Ask AI</button>
+                  <button class="tic-button" data-action="selection" title="Use selected text from Teams, or latest transcript if nothing is selected">Use selected</button>
+                  <label class="tic-lines-control" title="Number of latest transcript lines to grab">
+                    <span>Lines</span>
+                    <input class="tic-lines" type="number" min="1" max="10" value="1" aria-label="Lines to grab" />
+                  </label>
+                </div>
+              </div>
+              <div class="tic-status"></div>
+              <div class="tic-question" hidden>
+                <div class="tic-box-header">
+                  <div class="tic-label">Current question</div>
+                  <button class="tic-translate-button" data-action="translate-question">Translate</button>
+                </div>
+                <div data-slot="question"></div>
+                <div class="tic-translation" data-slot="question-translation" hidden></div>
+              </div>
+              <div class="tic-answer" hidden>
+                <div class="tic-box-header">
+                  <div class="tic-label">Answer</div>
+                  <button class="tic-translate-button" data-action="translate-answer">Translate</button>
+                </div>
+                <div class="tic-answer-body" data-slot="answer"></div>
+                <div class="tic-translation" data-slot="answer-translation" hidden></div>
+                <div class="tic-answer-footer">
+                  <span data-slot="answer-source">Sources: current context</span>
+                  <div class="tic-answer-actions">
+                    <button class="tic-button tic-button-sm" data-action="copy-answer">Copy</button>
+                    <button class="tic-button tic-button-sm" data-action="regenerate">Regenerate</button>
+                  </div>
+                </div>
+              </div>
+              <div class="tic-error" hidden></div>
+            </section>
             </div>
-          </div>
-          <div class="tic-status"></div>
-          <div class="tic-question" hidden>
-            <div class="tic-box-header">
-              <div class="tic-label">Question</div>
-              <button class="tic-translate-button" data-action="translate-question">Dịch</button>
-            </div>
-            <div data-slot="question"></div>
-            <div class="tic-translation" data-slot="question-translation" hidden></div>
-          </div>
-          <div class="tic-answer" hidden>
-            <div class="tic-box-header">
-              <div class="tic-label">Suggested answer</div>
-              <button class="tic-translate-button" data-action="translate-answer">Dịch</button>
-            </div>
-            <div data-slot="answer"></div>
-            <div class="tic-translation" data-slot="answer-translation" hidden></div>
-          </div>
-          <div class="tic-error" hidden></div>
-          <div class="tic-status">Keep this window outside the shared Teams tab/window.</div>
         </div>
       </div>
     `;
@@ -109,8 +136,16 @@ class PanelView {
     this.analyzeButton = document.querySelector(
       '[data-action="manual"]',
     ) as HTMLButtonElement;
+    this.contextSearchInput = document.querySelector(
+      ".tic-context-search",
+    ) as HTMLInputElement;
+    this.contextBox = document.querySelector('[data-slot="context"]') as HTMLDivElement;
+    this.selectedLinesCount = document.querySelector(
+      '[data-slot="selected-lines"]',
+    ) as HTMLSpanElement;
 
     this.bindEvents();
+    this.renderContextLines();
   }
 
   setSettings(settings: MeetingSettings): void {
@@ -123,6 +158,7 @@ class PanelView {
   setDraft(input: string, status: string): void {
     this.clearError();
     this.manualInput.value = input;
+    this.setContext(input);
     if (input.trim()) {
       this.setQuestion(input);
     }
@@ -196,10 +232,22 @@ class PanelView {
         void this.translateSlot("answer");
       }
 
+      if (action === "copy-answer") {
+        void this.copyAnswer();
+      }
+
+      if (action === "regenerate") {
+        this.regenerateAnswer();
+      }
+
       if (action === "clear-history") {
         conversationHistory = [];
         this.setDraft("", "Conversation history cleared.");
       }
+    });
+
+    this.contextSearchInput.addEventListener("input", () => {
+      this.renderContextLines();
     });
 
     this.backendInput.addEventListener("change", () => {
@@ -252,13 +300,90 @@ class PanelView {
     });
   }
 
+  private regenerateAnswer(): void {
+    const questionSlot = this.questionBox.querySelector('[data-slot="question"]');
+    const question =
+      this.manualInput.value.trim() || questionSlot?.textContent?.trim() || "";
+    if (question) {
+      this.manualInput.value = question;
+    }
+    analyzeQuestion(question);
+  }
+
+  private async copyAnswer(): Promise<void> {
+    const answerSlot = this.answerBox.querySelector('[data-slot="answer"]');
+    const answer = answerSlot?.textContent?.trim() ?? "";
+    if (!answer) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(answer);
+      this.setStatus("Answer copied.");
+    } catch {
+      this.setError("Could not copy answer.");
+    }
+  }
+
   private setQuestion(question: string): void {
+    this.setContext(question);
     this.questionBox.hidden = false;
     const questionSlot = this.questionBox.querySelector('[data-slot="question"]');
     if (questionSlot) {
       questionSlot.textContent = question;
     }
     this.clearTranslation("question");
+  }
+
+  private setContext(text: string): void {
+    const lines = text
+      .split(/\r?\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    this.currentContextLines = lines.length > 0 ? lines : text.trim() ? [text.trim()] : [];
+    this.renderContextLines();
+  }
+
+  private renderContextLines(): void {
+    const filter = this.contextSearchInput.value.trim().toLocaleLowerCase();
+    const rows = this.currentContextLines
+      .map((text, index) => ({ text, index }))
+      .filter((row) => !filter || row.text.toLocaleLowerCase().includes(filter));
+
+    this.contextBox.replaceChildren();
+    this.selectedLinesCount.textContent = String(this.currentContextLines.length);
+
+    if (this.currentContextLines.length === 0) {
+      const placeholder = document.createElement("div");
+      placeholder.className = "tic-context-empty";
+      placeholder.textContent = "Use selected text or paste transcript to load context.";
+      this.contextBox.appendChild(placeholder);
+      return;
+    }
+
+    if (rows.length === 0) {
+      const placeholder = document.createElement("div");
+      placeholder.className = "tic-context-empty";
+      placeholder.textContent = "No matching transcript lines.";
+      this.contextBox.appendChild(placeholder);
+      return;
+    }
+
+    for (const row of rows) {
+      const line = document.createElement("div");
+      line.className = "tic-context-line";
+
+      const index = document.createElement("span");
+      index.className = "tic-context-index";
+      index.textContent = String(row.index + 1).padStart(2, "0");
+
+      const text = document.createElement("span");
+      text.className = "tic-context-text";
+      text.textContent = row.text;
+
+      line.append(index, text);
+      this.contextBox.appendChild(line);
+    }
   }
 
   private setStatus(message: string): void {

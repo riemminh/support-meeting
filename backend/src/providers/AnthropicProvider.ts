@@ -1,11 +1,15 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { LLMProvider, InterviewAnswerResult, InterviewAnswerInput } from "./LLMProvider.js";
+import type { LLMProvider, InterviewAnswerResult, InterviewAnswerInput, TranslateInput, TranslateResult } from "./LLMProvider.js";
 import {
   buildHistoryAssistantMessage,
   buildInterviewSystemPrompt,
   buildInterviewUserPrompt,
   buildHistoryUserMessage,
 } from "../prompts/interviewPrompt.js";
+import {
+  TRANSLATE_SYSTEM_PROMPT,
+  buildTranslateUserPrompt,
+} from "../prompts/translatePrompt.js";
 
 function parseEnvInt(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -136,5 +140,30 @@ export class AnthropicProvider implements LLMProvider {
         yield event.delta.text;
       }
     }
+  }
+
+  async translateText(input: TranslateInput): Promise<TranslateResult> {
+    const response = await this.client.messages.create({
+      model: this.model,
+      max_tokens: 2048,
+      temperature: 0.2,
+      system: TRANSLATE_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: "user",
+          content: buildTranslateUserPrompt(input.text),
+        },
+      ],
+    });
+
+    const translation = response.content
+      .map((block) => (block.type === "text" ? block.text : ""))
+      .join("\n")
+      .trim();
+
+    return {
+      translation,
+      model: response.model,
+    };
   }
 }

@@ -1,25 +1,53 @@
+/* ─── Cursor-style design tokens ───────────────────────────────────── */
+:root {
+  --tic-bg: #1a1a1f;
+  --tic-bg-elevated: #1e1e26;
+  --tic-bg-surface: #252531;
+  --tic-bg-hover: #2c2c3a;
+  --tic-bg-active: #32324a;
+  --tic-border: rgba(160, 160, 210, 0.38);
+  --tic-border-focus: rgba(139, 92, 246, 0.85);
+  --tic-accent: #8b5cf6;
+  --tic-accent-hover: #7c3aed;
+  --tic-accent-glow: rgba(139, 92, 246, 0.18);
+  --tic-accent-2: #3b82f6;
+  --tic-text: #e2e2f0;
+  --tic-text-muted: #8b8ba7;
+  --tic-text-subtle: #5a5a72;
+  --tic-success: #22c55e;
+  --tic-error-bg: rgba(220, 38, 38, 0.12);
+  --tic-error-border: rgba(220, 38, 38, 0.3);
+  --tic-error-text: #f87171;
+  --tic-radius: 10px;
+  --tic-radius-sm: 6px;
+  --tic-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ─── Overlay root ─────────────────────────────────────────────────── */
 .tic-overlay {
   position: fixed;
-  top: 82px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2147483647;
-  width: min(570px, calc(100vw - 36px));
-  min-width: min(360px, calc(100vw - 16px));
-  min-height: min(260px, calc(100vh - 16px));
+  width: min(860px, calc(100vw - 32px));
+  min-width: min(480px, calc(100vw - 16px));
+  min-height: min(360px, calc(100vh - 16px));
   max-width: calc(100vw - 16px);
-  max-height: min(680px, calc(100vh - 104px));
+  max-height: min(720px, calc(100vh - 88px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: #202124;
-  background: #ffffff;
-  border: 1px solid rgba(32, 33, 36, 0.18);
-  border-radius: 8px;
-  box-shadow: 0 18px 50px rgba(32, 33, 36, 0.24);
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
+  color: var(--tic-text);
+  background: var(--tic-bg);
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius);
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.06),
+    0 24px 64px rgba(0, 0, 0, 0.65),
+    0 8px 24px rgba(0, 0, 0, 0.4);
+  font-family: var(--tic-font);
+  font-size: 13px;
 }
 
 .tic-overlay[data-minimized="true"] {
@@ -30,17 +58,9 @@
   max-height: none;
 }
 
-.tic-overlay[data-dragging="true"] {
-  user-select: none;
-}
-
-.tic-overlay[data-resizing="true"] {
-  user-select: none;
-}
-
-.tic-overlay[hidden] {
-  display: none;
-}
+.tic-overlay[data-dragging="true"] { user-select: none; }
+.tic-overlay[data-resizing="true"] { user-select: none; }
+.tic-overlay[hidden] { display: none; }
 
 .tic-overlay[data-panel="true"] {
   position: static;
@@ -56,44 +76,108 @@
   box-shadow: none;
 }
 
+/* ─── Header ───────────────────────────────────────────────────────── */
 .tic-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 10px 12px;
-  background: #3d6bff;
-  color: #ffffff;
+  padding: 11px 14px;
+  background: var(--tic-bg-elevated);
+  border-bottom: 1px solid var(--tic-border);
   cursor: grab;
   touch-action: none;
+  flex: 0 0 auto;
 }
 
-.tic-overlay[data-dragging="true"] .tic-header {
-  cursor: grabbing;
-}
+.tic-overlay[data-dragging="true"] .tic-header { cursor: grabbing; }
+.tic-overlay[data-panel="true"] .tic-header { cursor: default; }
 
-.tic-overlay[data-panel="true"] .tic-header {
-  cursor: default;
+.tic-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .tic-title {
   font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-weight: 600;
+  color: var(--tic-text);
+  letter-spacing: -0.01em;
 }
 
 .tic-subtitle {
   font-size: 11px;
-  line-height: 1.2;
-  opacity: 0.85;
+  color: var(--tic-text-muted);
+  line-height: 1.3;
 }
 
 .tic-header-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  flex: 0 0 auto;
 }
 
+/* ─── Settings dropdown in header ─────────────────────────────────── */
+.tic-settings-menu {
+  position: relative;
+}
+
+.tic-settings-menu > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 28px;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  color: var(--tic-text-muted);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  user-select: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tic-settings-menu > summary:hover {
+  background: var(--tic-bg-hover);
+  color: var(--tic-text);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.tic-settings-menu > summary::before {
+  content: "⚙";
+  font-size: 12px;
+}
+
+.tic-settings-menu[open] > summary {
+  background: var(--tic-bg-hover);
+  color: var(--tic-accent);
+  border-color: var(--tic-border-focus);
+}
+
+.tic-settings-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  min-width: 280px;
+  background: var(--tic-bg-elevated);
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── Icon buttons (minimize, detach) ─────────────────────────────── */
 .tic-icon-button {
   width: 28px;
   height: 28px;
@@ -101,26 +185,29 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  border: 0;
-  border-radius: 6px;
-  color: inherit;
-  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  color: var(--tic-text-muted);
+  background: transparent;
   cursor: pointer;
   font: inherit;
+  font-size: 14px;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .tic-icon-button:hover {
-  background: rgba(255, 255, 255, 0.26);
+  background: var(--tic-bg-hover);
+  color: var(--tic-text);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
+/* ─── Body: 2-column workspace ─────────────────────────────────────── */
 .tic-body {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .tic-overlay[data-minimized="true"] .tic-body,
@@ -130,6 +217,564 @@
   display: none;
 }
 
+.tic-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+/* ─── Side panels ──────────────────────────────────────────────────── */
+.tic-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tic-context-panel {
+  border-right: 1px solid var(--tic-border);
+  background: var(--tic-bg);
+}
+
+.tic-qa-panel {
+  background: var(--tic-bg-elevated);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+}
+
+.tic-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--tic-border);
+  flex: 0 0 auto;
+}
+
+.tic-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tic-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ─── Transcript (left) ────────────────────────────────────────────── */
+.tic-context-search-wrap {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--tic-border);
+  flex: 0 0 auto;
+}
+
+.tic-context-search {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  color: var(--tic-text);
+  background: var(--tic-bg-surface);
+  font: inherit;
+  font-size: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.tic-context-search:focus {
+  border-color: var(--tic-border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--tic-accent-glow);
+}
+
+.tic-context-search::placeholder {
+  color: var(--tic-text-subtle);
+}
+
+.tic-context-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+
+.tic-context-list::-webkit-scrollbar {
+  width: 4px;
+}
+.tic-context-list::-webkit-scrollbar-track { background: transparent; }
+.tic-context-list::-webkit-scrollbar-thumb {
+  background: var(--tic-bg-hover);
+  border-radius: 4px;
+}
+
+.tic-context-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 12px;
+  cursor: default;
+  transition: background 0.1s;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+.tic-context-line:hover {
+  background: var(--tic-bg-hover);
+}
+
+.tic-context-line.is-selected {
+  background: var(--tic-accent-glow);
+}
+
+.tic-context-index {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tic-accent);
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+  min-width: 20px;
+}
+
+.tic-context-text {
+  font-size: 12px;
+  color: var(--tic-text);
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.tic-context-empty {
+  padding: 20px 12px;
+  color: var(--tic-text-subtle);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.tic-context-footer {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-top: 1px solid var(--tic-border);
+  font-size: 11px;
+  color: var(--tic-text-subtle);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tic-context-footer span {
+  color: var(--tic-accent);
+  font-weight: 600;
+}
+
+/* ─── Ask section (right top) ──────────────────────────────────────── */
+.tic-ask-section {
+  padding: 12px;
+  border-bottom: 1px solid var(--tic-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.tic-ask-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tic-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tic-input {
+  width: 100%;
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  padding: 9px 11px;
+  color: var(--tic-text);
+  background: var(--tic-bg-surface);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  field-sizing: content;
+}
+
+.tic-input:focus {
+  border-color: var(--tic-border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--tic-accent-glow);
+}
+
+.tic-input::placeholder {
+  color: var(--tic-text-subtle);
+}
+
+.tic-action-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ─── Buttons ──────────────────────────────────────────────────────── */
+.tic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  color: var(--tic-text-muted);
+  background: var(--tic-bg-surface);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.tic-button:hover {
+  background: var(--tic-bg-hover);
+  color: var(--tic-text);
+  border-color: rgba(139, 92, 246, 0.28);
+}
+
+.tic-button:active {
+  background: var(--tic-bg-active);
+}
+
+.tic-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.tic-button-primary {
+  background: var(--tic-accent);
+  border-color: var(--tic-accent);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+}
+
+.tic-button-primary:hover {
+  background: var(--tic-accent-hover);
+  border-color: var(--tic-accent-hover);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+}
+
+.tic-button-sm {
+  height: 24px;
+  padding: 0 9px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+
+.tic-button-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--tic-text-muted);
+}
+
+.tic-button-ghost:hover {
+  background: var(--tic-bg-hover);
+  border-color: var(--tic-border);
+  color: var(--tic-text);
+}
+
+/* ─── Context mode selector ────────────────────────────────────────── */
+.tic-context-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tic-context-label {
+  font-size: 11px;
+  color: var(--tic-text-subtle);
+  white-space: nowrap;
+}
+
+.tic-lines-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  color: var(--tic-text-muted);
+  background: var(--tic-bg-surface);
+  font-size: 11px;
+  user-select: none;
+}
+
+.tic-lines-control .tic-lines {
+  width: 36px;
+}
+
+.tic-lines {
+  width: 44px;
+  min-width: 36px;
+  border: 1px solid var(--tic-border);
+  border-radius: 5px;
+  padding: 3px 6px;
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+  color: var(--tic-text);
+  background: var(--tic-bg);
+}
+
+.tic-lines:focus {
+  border-color: var(--tic-border-focus);
+  outline: none;
+}
+
+/* ─── Status bar ───────────────────────────────────────────────────── */
+.tic-status {
+  padding: 4px 12px;
+  min-height: 22px;
+  color: var(--tic-text-subtle);
+  font-size: 11px;
+  line-height: 1.4;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--tic-border);
+}
+
+/* ─── Question card (compact, inside answer area) ──────────────────── */
+.tic-question {
+  margin: 10px 12px 0;
+  border-radius: var(--tic-radius-sm);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.07);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.tic-question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.14);
+}
+
+.tic-question [data-slot="question"] {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: var(--tic-text-muted);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.tic-question [data-slot="question-translation"] {
+  padding: 4px 10px 8px;
+  font-size: 11px;
+  color: var(--tic-text-subtle);
+  border-top: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+/* ─── Answer card ──────────────────────────────────────────────────── */
+.tic-answer {
+  margin: 10px 12px;
+  border-radius: var(--tic-radius);
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  background: var(--tic-bg-surface);
+  overflow: hidden;
+  flex: 0 0 auto;
+  box-shadow: 0 2px 12px rgba(139, 92, 246, 0.08);
+}
+
+.tic-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.14);
+  background: rgba(139, 92, 246, 0.06);
+}
+
+.tic-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tic-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tic-answer-body {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--tic-text);
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tic-answer-body::-webkit-scrollbar { width: 4px; }
+.tic-answer-body::-webkit-scrollbar-track { background: transparent; }
+.tic-answer-body::-webkit-scrollbar-thumb {
+  background: var(--tic-bg-hover);
+  border-radius: 4px;
+}
+
+.tic-translation {
+  margin: 0 12px 10px;
+  padding: 7px 10px;
+  border-radius: var(--tic-radius-sm);
+  border: 1px solid var(--tic-border);
+  background: var(--tic-bg-hover);
+  font-size: 12px;
+  color: var(--tic-text-muted);
+  line-height: 1.5;
+}
+
+.tic-answer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 12px;
+  border-top: 1px solid rgba(139, 92, 246, 0.1);
+  flex-wrap: wrap;
+}
+
+.tic-answer-source {
+  font-size: 11px;
+  color: var(--tic-text-subtle);
+}
+
+.tic-answer-actions {
+  display: flex;
+  gap: 5px;
+}
+
+/* ─── Error box ────────────────────────────────────────────────────── */
+.tic-error {
+  margin: 10px 12px;
+  border-radius: var(--tic-radius-sm);
+  padding: 9px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1px solid var(--tic-error-border);
+  color: var(--tic-error-text);
+  background: var(--tic-error-bg);
+  flex: 0 0 auto;
+}
+
+/* ─── Translate button ─────────────────────────────────────────────── */
+.tic-translate-button {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--tic-border);
+  border-radius: 5px;
+  color: var(--tic-accent);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.tic-translate-button:hover {
+  background: var(--tic-accent-glow);
+  border-color: var(--tic-border-focus);
+}
+
+/* ─── Settings form ─────────────────────────────────────────────────── */
+.tic-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tic-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tic-url,
+.tic-speaker,
+.tic-prompt-mode {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--tic-border);
+  border-radius: var(--tic-radius-sm);
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--tic-text);
+  background: var(--tic-bg-surface);
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.tic-prompt-mode {
+  width: auto;
+  min-width: 150px;
+}
+
+.tic-url:focus,
+.tic-speaker:focus,
+.tic-prompt-mode:focus {
+  border-color: var(--tic-border-focus);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--tic-accent-glow);
+}
+
+.tic-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tic-text-muted);
+  font-size: 12px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.tic-checkbox input[type="checkbox"] {
+  accent-color: var(--tic-accent);
+}
+
+/* ─── Keyboard shortcut badge ──────────────────────────────────────── */
+.tic-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--tic-border);
+  border-radius: 4px;
+  color: var(--tic-text-subtle);
+  background: var(--tic-bg-surface);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* ─── Resize handle ─────────────────────────────────────────────────── */
 .tic-resize-handle {
   position: absolute;
   right: 0;
@@ -139,236 +784,39 @@
   cursor: nwse-resize;
   touch-action: none;
   background:
-    linear-gradient(135deg, transparent 0 45%, rgba(60, 64, 67, 0.35) 46% 54%, transparent 55%),
-    linear-gradient(135deg, transparent 0 62%, rgba(60, 64, 67, 0.28) 63% 70%, transparent 71%);
-  opacity: 0.75;
+    linear-gradient(135deg, transparent 0 45%, rgba(139, 92, 246, 0.4) 46% 54%, transparent 55%),
+    linear-gradient(135deg, transparent 0 62%, rgba(139, 92, 246, 0.3) 63% 70%, transparent 71%);
+  opacity: 0.6;
+  border-radius: 0 0 var(--tic-radius) 0;
 }
 
-.tic-resize-handle:hover {
-  opacity: 1;
+.tic-resize-handle:hover { opacity: 1; }
+
+/* ─── Scrollbars (global within overlay) ───────────────────────────── */
+.tic-overlay ::-webkit-scrollbar { width: 5px; height: 5px; }
+.tic-overlay ::-webkit-scrollbar-track { background: transparent; }
+.tic-overlay ::-webkit-scrollbar-thumb {
+  background: var(--tic-bg-hover);
+  border-radius: 4px;
+}
+.tic-overlay ::-webkit-scrollbar-thumb:hover {
+  background: var(--tic-bg-active);
 }
 
-.tic-row {
-  display: flex;
-  gap: 8px;
+/* ─── Minimized state ───────────────────────────────────────────────── */
+.tic-overlay[data-minimized="true"] .tic-workspace,
+.tic-overlay[data-minimized="true"] .tic-status {
+  display: none;
 }
 
-.tic-input {
-  min-height: 76px;
-  width: 100%;
-  resize: vertical;
-  border: 1px solid rgba(32, 33, 36, 0.18);
-  border-radius: 8px;
-  padding: 9px 10px;
-  color: #202124;
-  background: #ffffff;
-  font: inherit;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.tic-input:focus {
-  border-color: #3d6bff;
-  outline: 2px solid rgba(61, 107, 255, 0.16);
-}
-
-.tic-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid rgba(32, 33, 36, 0.16);
-  border-radius: 7px;
-  color: #202124;
-  background: #f8fafd;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  white-space: nowrap;
-}
-
-.tic-button:hover {
-  background: #edf2ff;
-}
-
-.tic-button-primary {
-  border-color: #3d6bff;
-  color: #ffffff;
-  background: #3d6bff;
-}
-
-.tic-button-primary:hover {
-  background: #315be0;
-}
-
-.tic-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.tic-button-sm {
-  min-height: 24px;
-  padding: 0 8px;
-  font-size: 11px;
-  border-radius: 5px;
-}
-
-.tic-status {
-  min-height: 18px;
-  color: #5f6368;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.tic-question,
-.tic-answer,
-.tic-error {
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.tic-question {
-  border: 1px solid rgba(61, 107, 255, 0.2);
-  background: #f3f6ff;
-}
-
-.tic-answer {
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-  border: 1px solid rgba(14, 135, 92, 0.22);
-  background: #f1fbf7;
-}
-
-.tic-error {
-  border: 1px solid rgba(188, 43, 43, 0.22);
-  color: #8c1d18;
-  background: #fff4f2;
-}
-
-.tic-label {
-  color: #5f6368;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.tic-box-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.tic-translate-button {
-  min-height: 22px;
-  padding: 0 8px;
-  border: 1px solid rgba(32, 33, 36, 0.14);
-  border-radius: 5px;
-  color: #315be0;
-  background: #ffffff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.tic-translate-button:hover {
-  background: #edf2ff;
-}
-
-.tic-translation {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(32, 33, 36, 0.12);
-  color: #3c4043;
-}
-
-.tic-settings {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: center;
-}
-
-.tic-url,
-.tic-speaker,
-.tic-prompt-mode {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid rgba(32, 33, 36, 0.18);
-  border-radius: 7px;
-  padding: 8px 9px;
-  font: inherit;
-  font-size: 12px;
-}
-
-.tic-prompt-mode {
-  width: auto;
-  min-width: 142px;
-  background: #ffffff;
-}
-
-.tic-lines {
-  width: 48px;
-  min-width: 48px;
-  border: 1px solid rgba(32, 33, 36, 0.18);
-  border-radius: 7px;
-  padding: 5px 6px;
-  font: inherit;
-  font-size: 12px;
-  text-align: center;
-}
-
-.tic-lines-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 0 8px;
-  border: 1px solid rgba(32, 33, 36, 0.12);
-  border-radius: 7px;
-  color: #5f6368;
-  background: #ffffff;
-  font-size: 12px;
-  user-select: none;
-}
-
-.tic-lines-control .tic-lines {
-  width: 42px;
-  min-width: 42px;
-  padding: 4px 5px;
-}
-
-.tic-speaker {
-  grid-column: 1 / -1;
-}
-
-.tic-checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #3c4043;
-  font-size: 12px;
-  user-select: none;
-}
-
-.tic-kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border: 1px solid rgba(32, 33, 36, 0.18);
-  border-radius: 5px;
-  color: #3c4043;
-  background: #f8fafd;
-  font-size: 11px;
-  font-weight: 700;
+/* ─── Responsive: narrow → stack columns ───────────────────────────── */
+@media (max-width: 540px) {
+  .tic-workspace {
+    grid-template-columns: 1fr;
+  }
+  .tic-context-panel {
+    border-right: none;
+    border-bottom: 1px solid var(--tic-border);
+    max-height: 180px;
+  }
 }

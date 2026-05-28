@@ -1,12 +1,12 @@
-# Teams Interview Copilot - Agent Handoff Knowledge Base
+# Teams Meeting Copilot - Agent Handoff Knowledge Base
 
-Tài liệu này chứa thông tin toàn diện về kiến trúc hệ thống, cấu trúc thư mục, luồng dữ liệu, chi tiết triển khai kỹ thuật, các ràng buộc bảo mật và hướng dẫn vận hành của dự án **Teams Interview Copilot**.
+Tài liệu này chứa thông tin toàn diện về kiến trúc hệ thống, cấu trúc thư mục, luồng dữ liệu, chi tiết triển khai kỹ thuật, các ràng buộc bảo mật và hướng dẫn vận hành của dự án **Teams Meeting Copilot**.
 
 ---
 
 ## 1. Mục tiêu & Các Giới hạn của Sản phẩm
 
-**Teams Interview Copilot** là một Chrome Extension chạy trên nền tảng Microsoft Teams Web (phiên bản Chrome). Nó hỗ trợ ứng viên trong quá trình phỏng vấn trực tuyến bằng cách phát hiện các câu hỏi từ interviewer trong DOM hiển thị, gửi về một local backend bảo mật, xử lý qua mô hình Claude (Anthropic SDK) và hiển thị các gợi ý trả lời trực quan trên một giao diện đè (Overlay UI) nổi trên màn hình Teams.
+**Teams Meeting Copilot** là một Chrome Extension chạy trên nền tảng Microsoft Teams Web (phiên bản Chrome). Nó hỗ trợ người dùng trong các cuộc họp bằng cách phát hiện các câu hỏi từ DOM hiển thị, gửi về một local backend bảo mật, xử lý qua mô hình Claude (Anthropic SDK) và hiển thị các gợi ý trả lời trực quan trên một giao diện đè (Overlay UI) nổi trên màn hình Teams.
 
 ### Các giới hạn/nguyên tắc cốt lõi:
 1. **Không Capture Audio/Video**: Hoàn toàn không ghi âm hay quay màn hình để tránh các cảnh báo quyền riêng tư nghiêm trọng từ trình duyệt và Microsoft Teams.

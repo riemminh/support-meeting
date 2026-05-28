@@ -1,8 +1,8 @@
-# Teams Interview Copilot
+# Teams Meeting Copilot
 
-Chrome Extension Manifest V3 plus a local TypeScript backend for Microsoft Teams Web interview help.
+Chrome Extension Manifest V3 plus a local TypeScript backend for Microsoft Teams Web meeting help.
 
-The extension reads visible Teams RTT/transcript/chat text from the DOM, detects likely interviewer questions, and sends only that single question to a local backend. The backend calls Claude through the Anthropic SDK and returns a short answer suggestion for the extension overlay.
+The extension reads visible Teams RTT/transcript/chat text from the DOM, detects likely meeting questions, and sends only that single question to a local backend. The backend calls Claude through the Anthropic SDK and returns a short answer suggestion for the extension overlay.
 
 It does not capture audio, run speech-to-text, use Microsoft Graph, use the Teams bot API, or send the full meeting transcript to Claude.
 
